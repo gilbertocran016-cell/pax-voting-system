@@ -804,8 +804,20 @@ async function verifyToken() {
             "PAX-4432": { gender: "F", used: false }
         };
 
+        function safeJSONParse(value, fallback) {
+            try {
+                const parsed = JSON.parse(value);
+                if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+                    return parsed;
+                }
+            } catch (error) {
+                console.warn('Invalid candidate JSON in localStorage, resetting to default.', error);
+            }
+            return fallback;
+        }
+
         let dbPositions = FIXED_8_POSITIONS; 
-        let dbCandidates = JSON.parse(localStorage.getItem('pax_candidates')) || DEFAULT_RANDOM_CANDIDATES;
+        let dbCandidates = safeJSONParse(localStorage.getItem('pax_candidates'), DEFAULT_RANDOM_CANDIDATES);
         dbPasswords = JSON.parse(localStorage.getItem('pax_passwords')) || STARTUP_PASSWORDS;
         let dbAuditTrail = JSON.parse(localStorage.getItem('pax_audit')) || [];
         let dbSystemLogo = localStorage.getItem('pax_system_logo') || ""; 
