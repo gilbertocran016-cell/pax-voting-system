@@ -1209,7 +1209,35 @@ async function verifyToken() {
             }
         }
 
-        function commitBallotTransactionRegistry() {
+        async function persistVoteResultsToFirestore() {
+            if (typeof db === 'undefined' || typeof firebase === 'undefined') return;
+
+            try {
+                const batch = db.batch();
+                const metricsRef = db.collection("system").doc("metrics");
+                batch.set(metricsRef, {
+                    ballotsSubmitted: firebase.firestore.FieldValue.increment(1)
+                }, { merge: true });
+
+                Object.keys(selectedBallotVotes).forEach(pos => {
+                    const candidateSelected = selectedBallotVotes[pos];
+                    const candidateData = dbCandidates[candidateSelected] || {};
+                    const candidateRef = db.collection("candidates").doc(candidateSelected);
+                    batch.set(candidateRef, {
+                        position: candidateData.position || pos,
+                        name: candidateData.name || "Unknown Candidate",
+                        image: candidateData.img || "",
+                        votes: firebase.firestore.FieldValue.increment(1)
+                    }, { merge: true });
+                });
+
+                await batch.commit();
+            } catch (error) {
+                console.error("Failed to persist votes to Firestore:", error);
+            }
+        }
+
+        async function commitBallotTransactionRegistry() {
             if (!currentVoterToken) return;
             if (confirm("Confirm Selection: Write ballot payload array elements onto the ledger?")) {
                 Object.keys(selectedBallotVotes).forEach(pos => {
@@ -1223,6 +1251,10 @@ async function verifyToken() {
                     time: new Date().toLocaleTimeString()
                 });
                 updateLocalStorageEngine();
+                await persistVoteResultsToFirestore();
+                if (typeof refreshAdminDashboardViews === 'function') {
+                    refreshAdminDashboardViews();
+                }
                 displayViewMatrix('view-success');
             }
         }
@@ -1390,7 +1422,7 @@ async function generateTokenBatchRegistry() {
                 if (!portfolioSnap.empty) {
                     portfolioSnap.forEach(doc => {
                         const portData = doc.data();
-                        if (portData.name && !dbPositions[doc.id]) {
+                        if (portData.name) {
                             dbPositions[doc.id] = { title: portData.name };
                         }
                     });
@@ -1402,12 +1434,12 @@ async function generateTokenBatchRegistry() {
                 if (!candidateSnap.empty) {
                     candidateSnap.forEach(doc => {
                         const candData = doc.data();
-                        if (candData.name && !dbCandidates[doc.id]) {
+                        if (candData.name) {
                             dbCandidates[doc.id] = {
-                                position: candData.portfolio || "president",
+                                position: candData.position || candData.portfolio || "president",
                                 name: candData.name,
                                 img: candData.image || "",
-                                votes: candData.votes || 0
+                                votes: Number(candData.votes) || 0
                             };
                         }
                     });
