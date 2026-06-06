@@ -950,6 +950,18 @@ async function verifyToken() {
             }
         }
 
+        async function fetchFirestoreTokenData(tokenInput) {
+            if (typeof db === 'undefined') return null;
+            try {
+                const docRef = db.collection("tokens").doc(tokenInput);
+                const docSnap = await docRef.get();
+                return docSnap.exists ? docSnap.data() : null;
+            } catch (fireError) {
+                console.error("Firestore token lookup failed:", fireError);
+                return null;
+            }
+        }
+
         /* RIGID MATCH CROSS-CHECK VALIDATION ENGINE WITH AGNOSTIC FORMATTING & AUTO-REPAIR */
         async function executeRigidCrossAuthValidation() {
             const tokenInput = document.getElementById('input-voter-token').value.trim().toUpperCase();
@@ -966,26 +978,22 @@ async function verifyToken() {
             }
 
             let matchedTokenData = dbPasswords[tokenInput];
-            console.log("Database Match Found:", matchedTokenData);
+            console.log("Local Token Record Found:", matchedTokenData);
 
-            if ((matchedTokenData === undefined || matchedTokenData === null) && typeof db !== 'undefined') {
-                try {
-                    const docRef = db.collection("tokens").doc(tokenInput);
-                    const docSnap = await docRef.get();
-                    if (docSnap.exists) {
-                        matchedTokenData = docSnap.data();
-                        console.log("Firestore Match Found:", matchedTokenData);
-                        if (matchedTokenData && typeof matchedTokenData === 'object') {
-                            dbPasswords[tokenInput] = {
-                                gender: String(matchedTokenData.gender || currentSelectedGenderContext).trim().toUpperCase(),
-                                used: matchedTokenData.used === true || matchedTokenData.used === 'true'
-                            };
-                            updateLocalStorageEngine();
-                        }
-                    }
-                } catch (fireError) {
-                    console.error("Firestore fallback lookup failed:", fireError);
-                }
+            const firestoreTokenData = await fetchFirestoreTokenData(tokenInput);
+            if (firestoreTokenData) {
+                console.log("Firestore Token Record Found:", firestoreTokenData);
+                matchedTokenData = firestoreTokenData;
+                dbPasswords[tokenInput] = {
+                    gender: String(firestoreTokenData.gender || currentSelectedGenderContext).trim().toUpperCase(),
+                    used: firestoreTokenData.used === true || firestoreTokenData.used === 'true'
+                };
+                updateLocalStorageEngine();
+            }
+
+            if (matchedTokenData === undefined || matchedTokenData === null) {
+                errBox.innerText = `Access Refused: Token code "${tokenInput}" not found in database register.`;
+                return;
             }
 
             if (matchedTokenData === undefined || matchedTokenData === null) {
@@ -1210,13 +1218,20 @@ async function verifyToken() {
         }
 
         async function persistVoteResultsToFirestore() {
-            if (typeof db === 'undefined' || typeof firebase === 'undefined') return;
+            if (typeof db === 'undefined' || typeof firebase === 'undefined' || !currentVoterToken) return;
 
             try {
                 const batch = db.batch();
                 const metricsRef = db.collection("system").doc("metrics");
+                const tokenRef = db.collection("tokens").doc(currentVoterToken);
+
                 batch.set(metricsRef, {
                     ballotsSubmitted: firebase.firestore.FieldValue.increment(1)
+                }, { merge: true });
+
+                batch.set(tokenRef, {
+                    gender: currentSelectedGenderContext,
+                    used: true
                 }, { merge: true });
 
                 Object.keys(selectedBallotVotes).forEach(pos => {
