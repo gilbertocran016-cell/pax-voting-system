@@ -816,8 +816,34 @@ async function verifyToken() {
             return fallback;
         }
 
+        function mergeDefaultCandidates(existingCandidates, defaultCandidates) {
+            const merged = { ...existingCandidates };
+            const counts = {};
+            Object.values(existingCandidates).forEach(candidate => {
+                if (candidate && candidate.position) {
+                    counts[candidate.position] = (counts[candidate.position] || 0) + 1;
+                }
+            });
+
+            Object.entries(defaultCandidates).forEach(([key, candidate]) => {
+                if (!candidate || !candidate.position) return;
+                const count = counts[candidate.position] || 0;
+                if (count < 2) {
+                    let fillKey = key;
+                    while (merged[fillKey]) {
+                        fillKey = `${fillKey}_alt`;
+                    }
+                    merged[fillKey] = candidate;
+                    counts[candidate.position] = count + 1;
+                }
+            });
+
+            return merged;
+        }
+
         let dbPositions = FIXED_8_POSITIONS; 
         let dbCandidates = safeJSONParse(localStorage.getItem('pax_candidates'), DEFAULT_RANDOM_CANDIDATES);
+        dbCandidates = mergeDefaultCandidates(dbCandidates, DEFAULT_RANDOM_CANDIDATES);
         dbPasswords = JSON.parse(localStorage.getItem('pax_passwords')) || STARTUP_PASSWORDS;
         let dbAuditTrail = JSON.parse(localStorage.getItem('pax_audit')) || [];
         let dbSystemLogo = localStorage.getItem('pax_system_logo') || ""; 
