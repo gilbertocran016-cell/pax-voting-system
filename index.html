@@ -1087,7 +1087,15 @@ async function verifyToken() {
                 deck.className = `candidate-deck-view ${idx === 0 ? 'active-deck' : ''}`;
 
                 const candidatesList = Object.keys(dbCandidates).filter(c => dbCandidates[c].position === posKey);
-                candidatesList.forEach(cKey => {
+                if (candidatesList.length === 0) {
+                    const emptyNotice = document.createElement('div');
+                    emptyNotice.className = 'candidate-profile-card';
+                    emptyNotice.style.background = '#fff7f0';
+                    emptyNotice.style.border = '2px dashed #f6ad55';
+                    emptyNotice.innerHTML = `<p style="font-weight:800; color:#c05621;">No candidates registered for ${dbPositions[posKey].title}.</p>`;
+                    deck.appendChild(emptyNotice);
+                } else {
+                    candidatesList.forEach(cKey => {
                     const card = document.createElement('div');
                     card.id = `card-node-${cKey}`;
                     card.className = "candidate-profile-card";
@@ -1099,8 +1107,9 @@ async function verifyToken() {
                         <h4 class="candidate-title-string">${dbCandidates[cKey].name}</h4>
                         <button id="select-btn-${cKey}" class="action-select-btn" onclick="toggleOptionSeal('${posKey}', '${cKey}')">Select</button>
                     `;
-                    deck.appendChild(card);
-                });
+                    	deck.appendChild(card);
+                    });
+                }
                 decksHousing.appendChild(deck);
             });
 
