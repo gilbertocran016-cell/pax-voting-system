@@ -1045,7 +1045,7 @@ async function verifyToken() {
 
             // 5. Check usage limits
             if (isUsed) {
-                errBox.innerText = "Access Refused: Secure code token already marked spent.";
+                errBox.innerText = "Access Refused: This token has already been used. Please request a new voting token from the administrator.";
                 return;
             }
 
