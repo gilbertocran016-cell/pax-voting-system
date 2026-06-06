@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAX ROMANA KNUST E-VOTING SYSTEM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-burgundy: #58181F;
+            --accent-gold: #DAA520;
+            --deep-wine: #360E12;
+            --pure-white: #FFFFFF;
+            --text-dark: #2D3748;
+            --light-blue: #EBF8FF;
+            --border-blue: #3182CE;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body, html {
+            height: 100%;
+            overflow-x: hidden;
+            background-color: var(--deep-wine);
+        }
+
+        .slideshow-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #4A1016 0%, #1A0406 100%);
+        }
+
+        .view-section {
+            display: none;
+            min-height: 100vh;
+            padding: 2rem;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--pure-white);
+        }
+
+        .view-section.active-view { display: flex; }
+
+        /* CARD MAIN CONTAINER */
+        .card-container {
+            background: rgba(88, 24, 31, 0.95);
+            color: var(--pure-white);
+            padding: 3.5rem 2.5rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            width: 100%;
+            max-width: 780px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .header-logo-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2.5rem;
+            margin-bottom: 1.75rem;
+            padding: 1.5rem 0;
+        }
+
+        .system-crest-logo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+            flex-shrink: 0;
+            padding: 14px;
+        }
+
+        .system-crest-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .logo-fallback-text {
+            font-weight: 800;
+            font-size: 0.65rem;
+            color: #718096;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .school-main-title {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: #FFF3CD;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            line-height: 1.2;
+        }
+
+        .election-display-title {
+            font-size: 2.4rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--pure-white);
+            margin-bottom: 1.5rem;
+            border-bottom: 3px solid var(--accent-gold);
+            padding-bottom: 1rem;
+            display: inline-block;
+            width: 100%;
+        }
+
+        /* WIZARD STEPS */
+        .auth-wizard-step { display: none; }
+        .auth-wizard-step.active-step { display: block; }
+
+        /* BUTTON STYLES */
+        .btn-glossy-pill {
+            display: inline-block;
+            padding: 1rem 3.5rem;
+            font-size: 1.1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #4A1016;
+            background: linear-gradient(to bottom, #FFF3CD 0%, #E6C280 100%);
+            border: 1px solid rgba(255,255,255,0.9);
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-glossy-pill:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(to bottom, #FFFDF5 0%, #F0D399 100%);
+        }
+
+        /* GENDER GROUP SELECT BUTTONS */
+        .gender-selection-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            max-width: 550px;
+            margin: 2rem auto 0 auto;
+        }
+
+        .gender-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 14px;
+            padding: 1.2rem;
+            color: var(--pure-white);
+            font-size: 1.1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .gender-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: var(--pure-white);
+        }
+
+        .gender-btn.selected-gender {
+            background: var(--light-blue);
+            color: var(--border-blue);
+            border-color: var(--border-blue);
+            box-shadow: 0 0 15px rgba(49, 130, 206, 0.5);
+        }
+
+        .form-group { margin-bottom: 1.5rem; text-align: left; }
+        .form-group label { display: block; margin-bottom: 0.75rem; font-weight: 800; font-size: 0.95rem; text-transform: uppercase; color: #FFF3CD; text-align: center; letter-spacing: 0.5px; }
+        
+        .form-control { 
+            width: 100%; 
+            max-width: 400px;
+            margin: 0 auto;
+            display: block;
+            padding: 1rem; 
+            font-size: 1.4rem; 
+            font-weight: 700; 
+            border: 2px solid var(--accent-gold); 
+            border-radius: 8px; 
+            outline: none; 
+            text-align: center; 
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        .form-control:focus { background: rgba(255,255,255,0.2); box-shadow: 0 0 15px rgba(218,165,32,0.4); }
+        .error-message { color: #FFD2D2; font-weight: 800; margin-top: 1rem; min-height: 1.5rem; font-size: 0.95rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+
+        /* BOOTH ARCHITECTURE */
+        .voting-terminal-container { width: 100%; max-width: 1150px; background: rgba(255, 255, 255, 0.98); color: var(--text-dark); padding: 3rem 2rem; border-radius: 20px; text-align: center; }
+        .booth-navigation-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin: 2rem 0; }
+        
+        .nav-category-btn { padding: 1rem 1.4rem; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; background: #e2e8f0; color: #4a5568; border: none; border-radius: 8px; cursor: pointer; }
+        .nav-category-btn.active-state { background: var(--primary-burgundy); color: white; }
+        .nav-category-btn.completed-state { background: #c6f6d5; color: #22543d; border: 2px dashed #48bb78; }
+
+        .candidate-deck-view { display: none; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-top: 2rem; justify-content: center; }
+        .candidate-deck-view.active-deck { display: grid; }
+        .candidate-profile-card { background: white; border: 3px solid #e2e8f0; border-radius: 16px; padding: 2rem 1.5rem; text-align: center; transition: all 0.2s ease; position: relative; overflow: hidden; }
+        .candidate-profile-card.selected-state { border-color: var(--accent-gold); background: #fffdf7; box-shadow: 0 10px 25px rgba(218,165,32,0.15); }
+
+        .portrait-frame-container { width: 160px; height: 160px; margin: 0 auto 1.5rem auto; border-radius: 50%; border: 4px solid #e2e8f0; background: #edf2f7; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; }
+        .candidate-profile-card.selected-state .portrait-frame-container { border-color: var(--accent-gold); }
+        .portrait-img-element { width: 100%; height: 100%; object-fit: cover; }
+        .portrait-placeholder-icon { font-size: 3.5rem; font-weight: 800; color: #a0aec0; text-transform: uppercase; }
+
+        .candidate-title-string { font-size: 1.2rem; font-weight: 800; margin-bottom: 1.5rem; min-height: 2.5rem; color: #1a202c; }
+        .action-select-btn { width: 100%; padding: 0.9rem; font-size: 1rem; font-weight: 800; border: 2px solid var(--primary-burgundy); background: transparent; color: var(--primary-burgundy); border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+        .action-select-btn.chosen-action, .action-select-btn:hover { background: var(--primary-burgundy); color: white; }
+
+        .submit-master-btn { display: none; margin-top: 3rem; background: #48bb78; color: white; border: none; padding: 1.2rem 4rem; font-size: 1.4rem; font-weight: 800; text-transform: uppercase; border-radius: 30px; cursor: pointer; box-shadow: 0 10px 25px rgba(72,187,120,0.4); }
+
+        /* ADMIN CONTROL PANEL */
+        .admin-dashboard-container { width: 100%; max-width: 1200px; background: white; color: var(--text-dark); border-radius: 16px; padding: 2.5rem; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .admin-dashboard-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 2rem; }
+        .dashboard-tabs { display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 2px solid #edf2f7; }
+        .db-tab-btn { padding: 0.75rem 1.5rem; font-size: 0.95rem; font-weight: 800; background: none; border: none; color: #718096; cursor: pointer; text-transform: uppercase; }
+        .db-tab-btn.active-tab { color: var(--primary-burgundy); border-bottom: 4px solid var(--primary-burgundy); }
+        .tab-panel { display: none; }
+        .tab-panel.active-panel { display: block; }
+
+        .telemetry-shelf { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .telemetry-node { background: #f7fafc; padding: 1.5rem; border-radius: 8px; border-left: 5px solid var(--primary-burgundy); text-align: center; }
+        .telemetry-data-output { font-size: 1.8rem; font-weight: 800; color: var(--primary-burgundy); margin-top: 0.5rem; }
+
+        .split-token-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem; }
+        .token-column-box { background: #f7fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .token-grid-display { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.5rem; max-height: 250px; overflow-y: auto; padding: 0.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; }
+        .token-badge { padding: 0.4rem; border-radius: 4px; text-align: center; font-weight: 800; font-size: 0.8rem; border: 1px solid #e2e8f0; }
+        .token-badge.burnt { background: #fed7d7; color: #9b2c2c; }
+        .token-badge.clean { background: #c6f6d5; color: #22543d; }
+
+        .audit-data-table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 1rem; }
+        .audit-data-table th, .audit-data-table td { padding: 1rem; border-bottom: 1px solid #e2e8f0; }
+        .audit-data-table th { background: #edf2f7; font-weight: 800; }
+
+        .portfolio-manager-row { background: #f7fafc; padding: 1.5rem; margin-bottom: 1rem; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .candidate-mini-pill { display: inline-flex; align-items: center; background: white; border: 1px solid #cbd5e0; padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; margin: 0.25rem; }
+        .candidate-mini-avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; margin-right: 0.5rem; background: #e2e8f0; }
+
+        .file-upload-wrapper { position: relative; display: inline-block; width: 100%; }
+        .file-upload-input { width: 100%; padding: 0.5rem; font-size: 0.85rem; font-weight: 700; border: 2px dashed #cbd5e0; border-radius: 6px; background: white; cursor: pointer; }
+
+        .back-nav-link { display: inline-block; margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; color: #FFF3CD; cursor: pointer; text-decoration: underline; text-transform: uppercase; }
+        .back-nav-link:hover { color: white; }
+
+        /* MOBILE RESPONSIVENESS */
+        @media (max-width: 768px) {
+            .card-container {
+                padding: 2rem 1.5rem;
+                border-radius: 16px;
+            }
+
+            .header-logo-row {
+                gap: 1.5rem;
+                margin-bottom: 1rem;
+                padding: 1rem 0;
+            }
+
+            .system-crest-logo {
+                width: 80px;
+                height: 80px;
+                padding: 8px;
+            }
+
+            .school-main-title {
+                font-size: 1.2rem;
+            }
+
+            .election-display-title {
+                font-size: 1.6rem;
+            }
+
+            .form-control {
+                max-width: 100%;
+                font-size: 1rem;
+                padding: 0.9rem;
+                font-weight: 600;
+            }
+
+            .form-control:focus {
+                font-size: 1rem;
+            }
+
+            .btn-glossy-pill {
+                padding: 0.9rem 2rem;
+                font-size: 1rem;
+            }
+
+            .gender-selection-grid {
+                max-width: 100%;
+                gap: 1rem;
+            }
+
+            .gender-btn {
+                padding: 1rem;
+                font-size: 0.95rem;
+            }
+
+            .portrait-frame-container {
+                width: 120px;
+                height: 120px;
+            }
+
+            .portrait-placeholder-icon {
+                font-size: 2.5rem;
+            }
+
+            .candidate-title-string {
+                font-size: 1rem;
+            }
+
+            .voting-terminal-container {
+                padding: 2rem 1rem;
+            }
+
+            .booth-navigation-grid {
+                gap: 0.5rem;
+                margin: 1rem 0;
+            }
+
+            .nav-category-btn {
+                padding: 0.8rem 1rem;
+                font-size: 0.75rem;
+            }
+
+            .candidate-deck-view {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 1rem;
+            }
+
+            .candidate-profile-card {
+                padding: 1.5rem 1rem;
+            }
+
+            .submit-master-btn {
+                padding: 1rem 2rem;
+                font-size: 1rem;
+                margin-top: 2rem;
+            }
+
+            .admin-dashboard-container {
+                padding: 1.5rem;
+            }
+
+            .split-token-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .action-select-btn {
+                padding: 0.8rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card-container {
+                padding: 1.5rem 1rem;
+                border-radius: 12px;
+            }
+
+            .header-logo-row {
+                gap: 1rem;
+                flex-direction: row;
+            }
+
+            .system-crest-logo {
+                width: 70px;
+                height: 70px;
+                padding: 6px;
+            }
+
+            .school-main-title {
+                font-size: 1rem;
+                line-height: 1.2;
+            }
+
+            .election-display-title {
+                font-size: 1.3rem;
+                margin-bottom: 1rem;
+            }
+
+            .form-control {
+                max-width: 100%;
+                font-size: 16px;
+                padding: 0.8rem;
+                letter-spacing: 1px;
+                -webkit-appearance: none;
+                appearance: none;
+                border-radius: 6px;
+            }
+
+            .form-control::placeholder {
+                font-size: 0.9rem;
+            }
+
+            .btn-glossy-pill {
+                padding: 0.8rem 1.5rem;
+                font-size: 0.95rem;
+            }
+
+            .gender-selection-grid {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+                max-width: 100%;
+            }
+
+            .gender-btn {
+                padding: 0.9rem;
+                font-size: 0.9rem;
+            }
+
+            .portrait-frame-container {
+                width: 100px;
+                height: 100px;
+                margin-bottom: 1rem;
+            }
+
+            .portrait-placeholder-icon {
+                font-size: 2rem;
+            }
+
+            .candidate-title-string {
+                font-size: 0.95rem;
+                min-height: 2rem;
+            }
+
+            .voting-terminal-container {
+                padding: 1.5rem 0.75rem;
+            }
+
+            .candidate-deck-view {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+                margin-top: 1rem;
+            }
+
+            .candidate-profile-card {
+                padding: 1rem 0.75rem;
+                border-radius: 12px;
+            }
+
+            .booth-navigation-grid {
+                gap: 0.35rem;
+                margin: 0.75rem 0;
+            }
+
+            .nav-category-btn {
+                padding: 0.7rem 0.85rem;
+                font-size: 0.7rem;
+            }
+
+            .action-select-btn {
+                padding: 0.7rem;
+                font-size: 0.85rem;
+            }
+
+            .submit-master-btn {
+                padding: 0.9rem 1.5rem;
+                font-size: 0.9rem;
+                margin-top: 1.5rem;
+            }
+
+            .admin-dashboard-container {
+                padding: 1rem;
+            }
+
+            .dashboard-tabs {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .db-tab-btn {
+                padding: 0.75rem 1rem;
+                border-bottom: 2px solid transparent;
+            }
+
+            .split-token-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .error-message {
+                font-size: 0.85rem;
+            }
+
+            .form-group label {
+                font-size: 0.9rem;
+            }
+
+            .telemetry-shelf {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="slideshow-container"></div>
+
+    <section id="view-home" class="view-section active-view">
+        <div class="card-container">
+            
+            <div class="header-logo-row">
+                <div class="system-crest-logo id-logo-slot-left">
+                    <img src="logo1.png" alt="Pax Logo" class="static-startup-logo">
+                </div>
+                <h1 class="school-main-title">Pax Romana - KNUST<br>Catholic Chaplaincy</h1>
+                <div class="system-crest-logo id-logo-slot-right">
+                    <img src="logo2.png" alt="Chaplaincy Logo" class="static-startup-logo">
+                </div>
+            </div>
+            
+            <h2 class="election-display-title">Digital Voting Portal</h2>
+            
+            <div id="auth-step-1" class="auth-wizard-step active-step">
+                <div style="margin-top: 2rem;">
+                    <button class="btn-glossy-pill" onclick="advanceToGenderSelection()">Voter Login</button>
+                </div>
+            </div>
+
+            <div id="auth-step-2" class="auth-wizard-step">
+                <div class="back-nav-link" onclick="regressToStep(1)">← Back to Welcome Screen</div>
+                <h3 style="color: #FFF3CD; text-transform: uppercase; font-size: 1.1rem; margin-top: 1rem; font-weight: 800; letter-spacing: 0.5px;">Identify Gender Group</h3>
+                
+                <div class="gender-selection-grid">
+                    <button class="gender-btn" id="gender-male-node" onclick="chooseGenderContext('M')">Male Voter</button>
+                    <button class="gender-btn" id="gender-female-node" onclick="chooseGenderContext('F')">Female Voter</button>
+                </div>
+            </div>
+
+            <div id="auth-step-3" class="auth-wizard-step">
+                <div class="back-nav-link" onclick="regressToStep(2)">← Change Gender Group Selection</div>
+                
+                <div class="form-group" style="margin-top: 2rem;">
+                    <label id="label-token-input-header">Authentication Token Voucher</label>
+                    <input type="text" id="input-voter-token" class="form-control" placeholder="Enter Code String" style="letter-spacing: 2px;" maxlength="15">
+                </div>
+                
+                <div id="wrapper-login-error" class="error-message"></div>
+                
+                <div style="margin-top: 1.5rem;">
+                    <button class="btn-glossy-pill" style="padding: 1rem 3rem;" onclick="executeRigidCrossAuthValidation()">Verify & Enter Terminal</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="view-voting-booth" class="view-section">
+        <div class="voting-terminal-container">
+            <h2 id="label-session-key" style="color: var(--primary-burgundy); font-weight: 900; text-transform: uppercase; font-size: 1.6rem; letter-spacing: 1px; margin-bottom: 0.25rem;"></h2>
+            <p id="label-portfolio-count-subtitle" style="font-size: 1rem; font-weight: 700; color: #718096; text-transform: uppercase; margin-bottom: 1.5rem; letter-spacing: 0.5px;"></p>
+            
+            <div class="booth-navigation-grid" id="voting-tabs-navigation-node"></div>
+            <div id="ballot-decks-housing-matrix"></div>
+            <button id="action-submit-ballot" class="submit-master-btn" onclick="commitBallotTransactionRegistry()">Submit Ballot</button>
+        </div>
+    </section>
+
+    <section id="view-success" class="view-section">
+        <div class="card-container" style="background: white; color: var(--text-dark);">
+            <h2 style="color: #2f855a; font-size: 1.8rem; font-weight: 900; text-transform: uppercase;">Vote Recorded</h2>
+            <p style="font-size: 1rem; margin-top: 1rem; font-weight: 600; color: #4a5568;">Your selection has been successfully decoupled from your token identifier and added to the ledger matrix.</p>
+            <button class="btn-glossy-pill" style="font-size: 1rem; margin-top: 2rem; padding: 0.8rem 2rem;" onclick="unconditionalSessionTerminus()">Close Session</button>
+        </div>
+    </section>
+
+    <section id="view-admin-auth" class="view-section">
+        <div class="card-container" style="max-width: 500px;">
+            <h2 style="font-size: 1.5rem; text-transform: uppercase; margin-bottom: 1.5rem; font-weight: 900; color: #FFF3CD;">Admin Authorization</h2>
+            <div class="form-group">
+                <label>System Master Password</label>
+                <input type="password" id="input-admin-pass" class="form-control" placeholder="Enter Password">
+            </div>
+            <div id="wrapper-admin-error" class="error-message"></div>
+            <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
+                <button class="btn-glossy-pill" style="font-size: 0.95rem; padding: 0.8rem 2rem; color: #444; background: #eee;" onclick="displayViewMatrix('view-home')">Exit</button>
+                <button class="btn-glossy-pill" style="font-size: 0.95rem; padding: 0.8rem 2rem; background: var(--accent-gold); color: #4A1016;" onclick="executeAdminAuthentication()">Authorize</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="view-admin-dashboard" class="view-section">
+        <div class="admin-dashboard-container">
+            <div class="admin-dashboard-header">
+                <div>
+                    <h2 style="color: var(--primary-burgundy); font-weight: 900; text-transform: uppercase; font-size:1.4rem;">Command Control Room</h2>
+                    <p style="color: #718096; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Local System Engine</p>
+                </div>
+                <button class="btn-glossy-pill" style="font-size: 0.85rem; padding: 0.6rem 1.5rem;" onclick="terminateAdminConsoleSession()">Lock Console</button>
+            </div>
+
+            <div class="dashboard-tabs">
+                <button id="tab-btn-analytics" class="db-tab-btn active-tab" onclick="switchDashboardTab('analytics')">Live Tally Monitoring</button>
+                <button id="tab-btn-portfolios" class="db-tab-btn" onclick="switchDashboardTab('portfolios')">Portfolio Settings</button>
+                <button id="tab-btn-tokens" class="db-tab-btn" onclick="switchDashboardTab('tokens')">Token Management Center</button>
+            </div>
+
+            <div id="panel-analytics" class="tab-panel active-panel">
+                <div class="telemetry-shelf">
+                    <div class="telemetry-node">
+                        <p style="font-size: 0.75rem; font-weight: 800; color: #4a5568;">TOTAL MALE ISSUED (MAX 3,500)</p>
+                        <div id="node-male-issued" class="telemetry-data-output">0 / 3,500</div>
+                    </div>
+                    <div class="telemetry-node">
+                        <p style="font-size: 0.75rem; font-weight: 800; color: #4a5568;">TOTAL FEMALE ISSUED (MAX 3,500)</p>
+                        <div id="node-female-issued" class="telemetry-data-output">0 / 3,500</div>
+                    </div>
+                    <div class="telemetry-node" style="border-left-color: var(--accent-gold);">
+                        <p style="font-size: 0.75rem; font-weight: 800; color: #4a5568;">BALLOTS SUBMITTED</p>
+                        <div id="node-voted" class="telemetry-data-output">0</div>
+                    </div>
+                </div>
+                <div id="charts-injection-grid-node" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;"></div>
+                
+                <h3 style="font-size: 1.1rem; text-transform: uppercase; margin-bottom: 0.5rem;">Cryptographic Voting Log Trail</h3>
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
+                    <table class="audit-data-table" id="table-audit-trail-ledger">
+                        <thead><tr><th>Masked Token Code</th><th>Framework Profile</th><th>Timestamp</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="panel-portfolios" class="tab-panel">
+                <div style="background: #fffdf5; padding: 1.5rem; border-radius: 12px; border: 2px dashed var(--accent-gold); margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; gap: 2rem;">
+                    <div style="text-align: left;">
+                        <h4 style="text-transform: uppercase; color: var(--primary-burgundy); font-weight: 800; font-size: 0.95rem; margin-bottom: 0.25rem;">Upload System-Wide Official Logo</h4>
+                        <p style="font-size: 0.8rem; color: #718096; font-weight: 600;">Browse and select your official chaplaincy graphics file (.jpg, .jpeg, .png).</p>
+                    </div>
+                    <div style="width: 250px;">
+                        <input type="file" id="input-system-logo-file" class="file-upload-input" accept=".jpg, .jpeg, .png" onchange="executeSystemLogoUpload()">
+                    </div>
+                </div>
+
+                <h3 style="font-size: 1.1rem; text-transform: uppercase; margin-bottom: 1rem;">Active Portfolios & PC Picture Installer</h3>
+                <div id="portfolio-management-list-node"></div>
+            </div>
+
+            <div id="panel-tokens" class="tab-panel">
+                <div style="background: #f7fafc; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; text-align: left;">
+                    <h4 style="text-transform: uppercase; margin-bottom: 1rem; font-size: 0.95rem;">Generate Segregated Voucher Systems</h4>
+                    <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                            <label style="color:#4a5568;">Gender Branch Segment</label>
+                            <select id="batch-gender-select" class="form-control" style="font-size: 1rem; padding: 0.6rem; color:#4a5568; border-color:#cbd5e0;">
+                                <option value="M">Male Network Segment</option>
+                                <option value="F">Female Network Segment</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                            <label style="color:#4a5568;">Quantity to Inject</label>
+                            <input type="number" id="batch-qty-input" class="form-control" style="font-size: 1rem; padding: 0.6rem; color:#4a5568; border-color:#cbd5e0;" value="5" min="1" max="500">
+                        </div>
+                        <button class="btn-glossy-pill" style="font-size: 0.95rem; padding: 0.7rem 2rem; background: var(--primary-burgundy); color: white;" onclick="generateTokenBatchRegistry()">Generate Codes</button>
+                    </div>
+                </div>
+
+                <div style="background: #ebf8ff; border: 1px solid #bee3f8; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.85rem; color: #2b6cb0; font-weight: 600;">
+                    <strong>Active Sandbox Test Verification Keys:</strong> Male Entry Token: <span style="font-family:monospace; background:white; padding:2px 6px; border-radius:4px;">PAX-9821</span> | Female Entry Token: <span style="font-family:monospace; background:white; padding:2px 6px; border-radius:4px;">PAX-4432</span>
+                </div>
+
+                <div class="split-token-container">
+                    <div class="token-column-box">
+                        <h4 style="font-size:0.85rem; text-transform:uppercase; margin-bottom:0.5rem; color:#2b6cb0;">Male Target Register</h4>
+                        <div class="token-grid-display" id="token-grid-male-node"></div>
+                    </div>
+                    <div class="token-column-box">
+                        <h4 style="font-size:0.85rem; text-transform:uppercase; margin-bottom:0.5rem; color:#b83280;">Female Target Register</h4>
+                        <div class="token-grid-display" id="token-grid-female-node"></div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; text-align: right;">
+                    <button class="btn-glossy-pill" style="background: #e53e3e; color: white; font-size: 0.9rem; padding: 0.6rem 1.5rem;" onclick="clearLocalStorageWipe()">Purge Local Database</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script>
+      const firebaseConfig = {
+  apiKey: "AIzaSyBODx37FkcxfK3Ku2he-6KzXf1r2OjNyFg",
+  authDomain: "pax-elections-2026.firebaseapp.com",
+  projectId: "pax-elections-2026",
+  storageBucket: "pax-elections-2026.firebasestorage.app",
+  messagingSenderId: "216406695161",
+  appId: "1:216406695161:web:e234c8771abdbacc50d628",
+  measurementId: "G-EKMTMH8X7Y"
+}; 
+let dbPasswords = {}; // Add this line! 
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+async function uploadExistingTokens() {
+    console.log("Starting upload. Tokens to upload:", Object.keys(dbPasswords));
+    
+    if (Object.keys(dbPasswords).length === 0) {
+        alert("Error: No tokens found in dbPasswords to upload!");
+        return;
+    }
+
+    const batch = db.batch();
+    
+    Object.keys(dbPasswords).forEach((token) => {
+        const docRef = db.collection("tokens").doc(token);
+        // Ensure you are saving all necessary fields, including gender
+        batch.set(docRef, { 
+            used: dbPasswords[token].used || false,
+            gender: dbPasswords[token].gender || "unknown" 
+        });
+    });
+
+    try {
+        await batch.commit();
+        console.log("Upload successful!");
+        alert("Success! All tokens have been uploaded to your new database.");
+    } catch (e) {
+        console.error("Critical Error during batch commit:", e);
+        alert("Error: " + e.message); // This will show the real error if one occurs
+    }
+}
+// uploadExistingTokens(); // Disabled automatic token upload on page load
+
+
+
+</script>
+<script>
+        const FIXED_8_POSITIONS = {
+            president: { title: "President" },
+            vice_president: { title: "Vice President" },
+            general_sec: { title: "General Secretary" },
+            finance_sec: { title: "Financial Secretary" },
+            organising_sec: { title: "Organizing Secretary" },
+            pro: { title: "Public Relations Officer (P.R.O.)" },
+            welfare: { title: "Welfare Officer" },
+            women_comm: { title: "Women's Commissioner" }
+        };
+
+        const DEFAULT_RANDOM_CANDIDATES = {
+            pres_1: { position: "president", name: "Emmanuel Opoku Ware", img: "", votes: 0 },
+            pres_2: { position: "president", name: "Michael Kofi Asare", img: "", votes: 0 },
+            vp_1: { position: "vice_president", name: "Francisca Yeboah", img: "", votes: 0 },
+            vp_2: { position: "vice_president", name: "Samuel Mensah Jnr", img: "", votes: 0 }
+        };
+
+async function verifyToken() {
+    const tokenInput = document.getElementById('voter-token').value;
+    const docRef = db.collection("tokens").doc(tokenInput);
+    
+    try {
+        const doc = await docRef.get();
+        if (doc.exists && doc.data().used === false) {
+            alert("Access Granted!");
+            // This is where you would call your function to show the voting screen
+        } else {
+            alert("Access Refused: Token invalid or already used.");
+        }
+    } catch (error) {
+        console.error("Error verifying token:", error);
+        alert("Connection error.");
+    }
+}
+
+
+
+
+        const STARTUP_PASSWORDS = {
+            "PAX-9821": { gender: "M", used: false },
+            "PAX-4432": { gender: "F", used: false }
+        };
+
+        let dbPositions = FIXED_8_POSITIONS; 
+        let dbCandidates = JSON.parse(localStorage.getItem('pax_candidates')) || DEFAULT_RANDOM_CANDIDATES;
+        dbPasswords = JSON.parse(localStorage.getItem('pax_passwords')) || STARTUP_PASSWORDS;
+        let dbAuditTrail = JSON.parse(localStorage.getItem('pax_audit')) || [];
+        let dbSystemLogo = localStorage.getItem('pax_system_logo') || ""; 
+
+        const MAX_LIMIT_PER_GENDER = 3500;
+        let currentVoterToken = "";
+        let currentSelectedGenderContext = ""; 
+        let selectedBallotVotes = {};
+        let filteredPositionKeys = [];
+        let activeBoothIndex = 0;
+
+        if(!localStorage.getItem('pax_passwords')) {
+            localStorage.setItem('pax_passwords', JSON.stringify(dbPasswords));
+        }
+
+        window.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+                e.preventDefault();
+                displayViewMatrix('view-admin-auth');
+            }
+        });
+
+        function updateLocalStorageEngine() {
+            localStorage.setItem('pax_candidates', JSON.stringify(dbCandidates));
+            localStorage.setItem('pax_passwords', JSON.stringify(dbPasswords));
+            localStorage.setItem('pax_audit', JSON.stringify(dbAuditTrail));
+            if(dbSystemLogo) localStorage.setItem('pax_system_logo', dbSystemLogo);
+        }
+
+        function refreshSystemLogoDisplays() {
+            const targets = ['.id-logo-slot-left', '.id-logo-slot-right'];
+            targets.forEach(selector => {
+                document.querySelectorAll(selector).forEach(elem => {
+                    const defaultSrc = selector === '.id-logo-slot-left' ? 'logo1.png' : 'logo2.png';
+                    let imageElem = elem.querySelector('img');
+                    if (!imageElem) {
+                        imageElem = document.createElement('img');
+                        imageElem.alt = 'Crest';
+                        imageElem.className = 'static-startup-logo';
+                        elem.innerHTML = '';
+                        elem.appendChild(imageElem);
+                    }
+
+                    if (dbSystemLogo && dbSystemLogo !== "") {
+                        imageElem.src = dbSystemLogo;
+                    } else {
+                        imageElem.src = defaultSrc;
+                    }
+                });
+            });
+        }
+
+        function executeSystemLogoUpload() {
+            const fileInput = document.getElementById('input-system-logo-file');
+            if (fileInput.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    dbSystemLogo = e.target.result;
+                    updateLocalStorageEngine();
+                    refreshSystemLogoDisplays();
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+        }
+
+        function displayViewMatrix(viewId) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active-view'));
+            const target = document.getElementById(viewId);
+            if(target) target.classList.add('active-view');
+        }
+
+        /* WIZARD SUB-NAVIGATION HANDLERS */
+        function advanceToGenderSelection() {
+            regressToStep(2);
+        }
+
+        function chooseGenderContext(gender) {
+            currentSelectedGenderContext = gender;
+            
+            document.querySelectorAll('.gender-btn').forEach(btn => btn.classList.remove('selected-gender'));
+            if(gender === 'M') {
+                document.getElementById('gender-male-node').classList.add('selected-gender');
+                document.getElementById('label-token-input-header').innerText = "Identify Male Voter Token Voucher";
+            } else {
+                document.getElementById('gender-female-node').classList.add('selected-gender');
+                document.getElementById('label-token-input-header').innerText = "Identify Female Voter Token Voucher";
+            }
+
+            setTimeout(() => { regressToStep(3); }, 250);
+        }
+
+        function regressToStep(stepNumber) {
+            document.querySelectorAll('.auth-wizard-step').forEach(step => step.classList.remove('active-step'));
+            document.getElementById(`auth-step-${stepNumber}`).classList.add('active-step');
+            
+            if(stepNumber === 1) {
+                currentSelectedGenderContext = "";
+                document.querySelectorAll('.gender-btn').forEach(btn => btn.classList.remove('selected-gender'));
+            }
+            if(stepNumber === 3) {
+                document.getElementById('input-voter-token').value = "";
+                document.getElementById('wrapper-login-error').innerText = "";
+                setTimeout(() => { document.getElementById('input-voter-token').focus(); }, 50);
+            }
+        }
+
+        /* RIGID MATCH CROSS-CHECK VALIDATION ENGINE WITH AGNOSTIC FORMATTING & AUTO-REPAIR */
+        async function executeRigidCrossAuthValidation() {
+            const tokenInput = document.getElementById('input-voter-token').value.trim().toUpperCase();
+            const errBox = document.getElementById('wrapper-login-error');
+            errBox.innerText = "";
+
+            console.log("--- STARTING TOKEN VALIDATION ---");
+            console.log("User Typed Token:", tokenInput);
+            console.log("Selected Login Context Gender:", currentSelectedGenderContext);
+
+            if (!tokenInput) {
+                errBox.innerText = "Error: Input box cannot be left empty.";
+                return;
+            }
+
+            let matchedTokenData = dbPasswords[tokenInput];
+            console.log("Database Match Found:", matchedTokenData);
+
+            if ((matchedTokenData === undefined || matchedTokenData === null) && typeof db !== 'undefined') {
+                try {
+                    const docRef = db.collection("tokens").doc(tokenInput);
+                    const docSnap = await docRef.get();
+                    if (docSnap.exists) {
+                        matchedTokenData = docSnap.data();
+                        console.log("Firestore Match Found:", matchedTokenData);
+                        if (matchedTokenData && typeof matchedTokenData === 'object') {
+                            dbPasswords[tokenInput] = {
+                                gender: String(matchedTokenData.gender || currentSelectedGenderContext).trim().toUpperCase(),
+                                used: matchedTokenData.used === true || matchedTokenData.used === 'true'
+                            };
+                            updateLocalStorageEngine();
+                        }
+                    }
+                } catch (fireError) {
+                    console.error("Firestore fallback lookup failed:", fireError);
+                }
+            }
+
+            if (matchedTokenData === undefined || matchedTokenData === null) {
+                errBox.innerText = `Access Refused: Token code "${tokenInput}" not found in database register.`;
+                return;
+            }
+
+            // 2. AGNOSTIC GENDER RESOLUTION: Flatten any structural variation
+            let tokenGender = "";
+            let isUsed = false;
+
+            if (typeof matchedTokenData === 'string') {
+                // Handles case where entry is just a plain string: "F" or "M"
+                tokenGender = matchedTokenData.trim().toUpperCase();
+            } else if (typeof matchedTokenData === 'object') {
+                // Handles case where entry is a configuration object
+                if (matchedTokenData.gender) {
+                    tokenGender = String(matchedTokenData.gender).trim().toUpperCase();
+                }
+                if (matchedTokenData.used === true || matchedTokenData.used === 'true') {
+                    isUsed = true;
+                }
+            }
+
+            console.log("Resolved Token Gender:", tokenGender);
+            console.log("Resolved Used Status:", isUsed);
+
+            // 3. AUTO-REPAIR MECHANISM: Fix missing or corrupted gender attributes on the fly
+            if (!tokenGender || (tokenGender !== 'M' && tokenGender !== 'F')) {
+                console.warn("System Warning: Token data layout mismatch or corrupted. Initiating auto-repair...");
+                
+                // Dynamically infer gender based on active context to seamlessly let the voter pass
+                tokenGender = currentSelectedGenderContext; 
+                
+                // Re-write the database object with the repaired schema
+                dbPasswords[tokenInput] = { gender: tokenGender, used: false };
+                
+                // Commit the fixed structure back to localStorage immediately
+                updateLocalStorageEngine();
+                console.log(`Auto-repair successful. Token ${tokenInput} updated to match context: ${tokenGender}`);
+            }
+
+            // 4. STAGE BLOCKER: Trigger error ONLY if they genuinely DON'T match
+            if (tokenGender !== currentSelectedGenderContext) {
+                const physicalTargetGroup = tokenGender === 'M' ? 'Male Voter' : 'Female Voter';
+                errBox.innerText = `Token Profile Error: This key belongs to a ${physicalTargetGroup} configuration. Please go back and update selection.`;
+                return;
+            }
+
+            // 5. Check usage limits
+            if (isUsed) {
+                errBox.innerText = "Access Refused: Secure code token already marked spent.";
+                return;
+            }
+
+            // Setup session payload variables safely
+            currentVoterToken = tokenInput;
+            selectedBallotVotes = {};
+            
+            console.log("Validation Successful! Entering terminal session.");
+            document.getElementById('label-session-key').innerText = `SECURE VOTING TERMINAL SESSION`;
+            buildDynamicBallotBoothStructure();
+            displayViewMatrix('view-voting-booth');
+        }
+
+        function executeAdminAuthentication() {
+            const passInput = document.getElementById('input-admin-pass').value;
+            const errBox = document.getElementById('wrapper-admin-error');
+            errBox.innerText = "";
+
+            if (passInput === "PAX@KNUST2026") {
+                displayViewMatrix('view-admin-dashboard');
+                refreshAdminDashboardViews();
+            } else {
+                errBox.innerText = "Unauthorized Access Vector.";
+            }
+        }
+
+        function terminateAdminConsoleSession() {
+            document.getElementById('input-admin-pass').value = "";
+            displayViewMatrix('view-home');
+        }
+
+        function processCandidateInsertionWithFile(posKey) {
+            const nameInput = document.getElementById(`input-candidate-name-${posKey}`).value.trim();
+            const fileInput = document.getElementById(`input-candidate-file-${posKey}`);
+            
+            if(!nameInput) {
+                alert("Candidate Name field is mandatory.");
+                return;
+            }
+
+            if(fileInput.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    saveCandidateRecord(posKey, nameInput, e.target.result);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                saveCandidateRecord(posKey, nameInput, "");
+            }
+        }
+
+        function saveCandidateRecord(posKey, name, imageString) {
+            const candidateUniqKey = posKey + "_" + Date.now();
+            dbCandidates[candidateUniqKey] = { position: posKey, name: name, img: imageString, votes: 0 };
+            updateLocalStorageEngine();
+            refreshAdminDashboardViews();
+        }
+
+        function deleteCandidateProfile(cKey) {
+            if(confirm("Permanently erase candidate configuration files?")) {
+                delete dbCandidates[cKey];
+                updateLocalStorageEngine();
+                refreshAdminDashboardViews();
+            }
+        }
+
+        /* 8 PORTFOLIOS vs 7 PORTFOLIOS BALLOT GENERATOR */
+        function buildDynamicBallotBoothStructure() {
+            const navDock = document.getElementById('voting-tabs-navigation-node');
+            const decksHousing = document.getElementById('ballot-decks-housing-matrix');
+            const subTitleLabel = document.getElementById('label-portfolio-count-subtitle');
+            
+            navDock.innerHTML = "";
+            decksHousing.innerHTML = "";
+
+            // Strict Filter: Remove Women's Comm portfolio if gender context is Male (M)
+            filteredPositionKeys = Object.keys(dbPositions).filter(posKey => {
+                if (posKey === 'women_comm' && currentSelectedGenderContext === 'M') return false; 
+                return true; 
+            });
+
+            subTitleLabel.innerText = `You are voting for exactly ${filteredPositionKeys.length} portfolios under this token profile`;
+
+            filteredPositionKeys.forEach((posKey, idx) => {
+                const btn = document.createElement('button');
+                btn.id = `nav-tab-${posKey}`;
+                btn.className = `nav-category-btn ${idx === 0 ? 'active-state' : ''}`;
+                btn.innerText = dbPositions[posKey].title;
+                btn.onclick = () => switchActiveBoothTabFrame(idx);
+                navDock.appendChild(btn);
+
+                const deck = document.createElement('div');
+                deck.id = `deck-frame-${posKey}`;
+                deck.className = `candidate-deck-view ${idx === 0 ? 'active-deck' : ''}`;
+
+                const candidatesList = Object.keys(dbCandidates).filter(c => dbCandidates[c].position === posKey);
+                candidatesList.forEach(cKey => {
+                    const card = document.createElement('div');
+                    card.id = `card-node-${cKey}`;
+                    card.className = "candidate-profile-card";
+                    
+                    let imageShellHTML = dbCandidates[cKey].img ? `<img src="${dbCandidates[cKey].img}" class="portrait-img-element">` : `<span class="portrait-placeholder-icon">${dbCandidates[cKey].name.charAt(0)}</span>`;
+
+                    card.innerHTML = `
+                        <div class="portrait-frame-container">${imageShellHTML}</div>
+                        <h4 class="candidate-title-string">${dbCandidates[cKey].name}</h4>
+                        <button id="select-btn-${cKey}" class="action-select-btn" onclick="toggleOptionSeal('${posKey}', '${cKey}')">Select</button>
+                    `;
+                    deck.appendChild(card);
+                });
+                decksHousing.appendChild(deck);
+            });
+
+            activeBoothIndex = 0;
+            evaluateMasterSubmissionDisplay();
+        }
+
+        function toggleOptionSeal(posKey, cKey) {
+            const currentSelected = selectedBallotVotes[posKey];
+            if (currentSelected === cKey) {
+                delete selectedBallotVotes[posKey];
+                document.getElementById(`card-node-${cKey}`).classList.remove('selected-state');
+                document.getElementById(`select-btn-${cKey}`).classList.remove('chosen-action');
+                document.getElementById(`select-btn-${cKey}`).innerText = "Select";
+            } else {
+                if (currentSelected) {
+                    document.getElementById(`card-node-${currentSelected}`).classList.remove('selected-state');
+                    document.getElementById(`select-btn-${currentSelected}`).classList.remove('chosen-action');
+                    document.getElementById(`select-btn-${currentSelected}`).innerText = "Select";
+                }
+                selectedBallotVotes[posKey] = cKey;
+                document.getElementById(`card-node-${cKey}`).classList.add('selected-state');
+                document.getElementById(`select-btn-${cKey}`).classList.add('chosen-action');
+                document.getElementById(`select-btn-${cKey}`).innerText = "Selected";
+            }
+
+            const tab = document.getElementById(`nav-tab-${posKey}`);
+            if(selectedBallotVotes[posKey]) tab.classList.add('completed-state');
+            else tab.classList.remove('completed-state');
+
+            evaluateMasterSubmissionDisplay();
+        }
+
+        function switchActiveBoothTabFrame(idx) {
+            const currentPos = filteredPositionKeys[activeBoothIndex];
+            const targetPos = filteredPositionKeys[idx];
+            document.getElementById(`nav-tab-${currentPos}`).classList.remove('active-state');
+            document.getElementById(`deck-frame-${currentPos}`).classList.remove('active-deck');
+            activeBoothIndex = idx;
+            document.getElementById(`nav-tab-${targetPos}`).classList.add('active-state');
+            document.getElementById(`deck-frame-${targetPos}`).classList.add('active-deck');
+        }
+
+        function evaluateMasterSubmissionDisplay() {
+            const btn = document.getElementById('action-submit-ballot');
+            if (Object.keys(selectedBallotVotes).length === filteredPositionKeys.length && filteredPositionKeys.length > 0) {
+                btn.style.display = "inline-block";
+            } else {
+                btn.style.display = "none";
+            }
+        }
+
+        function commitBallotTransactionRegistry() {
+            if (!currentVoterToken) return;
+            if (confirm("Confirm Selection: Write ballot payload array elements onto the ledger?")) {
+                Object.keys(selectedBallotVotes).forEach(pos => {
+                    const candidateSelected = selectedBallotVotes[pos];
+                    dbCandidates[candidateSelected].votes += 1;
+                });
+                dbPasswords[currentVoterToken].used = true;
+                dbAuditTrail.push({
+                    token: currentVoterToken.substring(0,5) + "****",
+                    gender: currentSelectedGenderContext,
+                    time: new Date().toLocaleTimeString()
+                });
+                updateLocalStorageEngine();
+                displayViewMatrix('view-success');
+            }
+        }
+
+        function unconditionalSessionTerminus() {
+            currentVoterToken = "";
+            regressToStep(1);
+            displayViewMatrix('view-home');
+        }
+
+        function switchDashboardTab(tab) {
+            document.querySelectorAll('.db-tab-btn').forEach(b => b.classList.remove('active-tab'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active-panel'));
+            document.getElementById(`tab-btn-${tab}`).classList.add('active-tab');
+            document.getElementById(`panel-${tab}`).classList.add('active-panel');
+        }
+
+        function refreshAdminDashboardViews() {
+            const tokensKeys = Object.keys(dbPasswords);
+            const totalMales = tokensKeys.filter(k => dbPasswords[k].gender === 'M').length;
+            const totalFemales = tokensKeys.filter(k => dbPasswords[k].gender === 'F').length;
+
+            document.getElementById('node-male-issued').innerText = `${totalMales} / ${MAX_LIMIT_PER_GENDER}`;
+            document.getElementById('node-female-issued').innerText = `${totalFemales} / ${MAX_LIMIT_PER_GENDER}`;
+            document.getElementById('node-voted').innerText = tokensKeys.filter(k => dbPasswords[k].used).length;
+
+            const chartsNode = document.getElementById('charts-injection-grid-node');
+            chartsNode.innerHTML = "";
+            Object.keys(dbPositions).forEach(posKey => {
+                const box = document.createElement('div');
+                box.style.background = "#f7fafc"; box.style.padding = "1rem"; box.style.borderRadius = "8px"; box.style.border = "1px solid #e2e8f0";
+                box.innerHTML = `<h4 style="text-transform:uppercase; font-size:0.85rem; margin-bottom:1rem; color:var(--primary-burgundy);">${dbPositions[posKey].title}</h4>`;
+
+                const portfolioCandidates = Object.keys(dbCandidates).filter(c => dbCandidates[c].position === posKey);
+                portfolioCandidates.forEach(cKey => {
+                    box.innerHTML += `
+                        <div style="font-size:0.85rem; font-weight:700; display:flex; justify-content:space-between; margin-bottom:0.2rem;">
+                            <span>${dbCandidates[cKey].name}</span>
+                            <span>${dbCandidates[cKey].votes} Votes</span>
+                        </div>
+                    `;
+                });
+                chartsNode.appendChild(box);
+            });
+
+            const configManagerNode = document.getElementById('portfolio-management-list-node');
+            configManagerNode.innerHTML = "";
+            Object.keys(dbPositions).forEach(posKey => {
+                const row = document.createElement('div');
+                row.className = "portfolio-manager-row";
+                
+                let candidateCardsHTML = "";
+                Object.keys(dbCandidates).filter(ck => dbCandidates[ck].position === posKey).forEach(ck => {
+                    let avatarSrcHTML = dbCandidates[ck].img !== "" ? `<img src="${dbCandidates[ck].img}" class="candidate-mini-avatar">` : `<div class="candidate-mini-avatar" style="background:#ccc; display:inline-block; text-align:center; line-height:24px; font-size:10px;">?</div>`;
+                    candidateCardsHTML += `
+                        <div class="candidate-mini-pill">
+                            ${avatarSrcHTML}
+                            <span>${dbCandidates[ck].name}</span>
+                            <strong style="margin-left:0.5rem; color:#e53e3e; cursor:pointer;" onclick="deleteCandidateProfile('${ck}')">×</strong>
+                        </div>
+                    `;
+                });
+
+                row.innerHTML = `
+                    <div style="margin-bottom:1rem; border-bottom:1px solid #e2e8f0; padding-bottom:0.5rem;">
+                        <strong style="color:var(--primary-burgundy); font-size:1.1rem;">${dbPositions[posKey].title}</strong>
+                    </div>
+                    <div style="margin-bottom:1rem;">${candidateCardsHTML || '<span style="font-size:0.85rem; color:#aaa; font-style:italic;">No candidates registered.</span>'}</div>
+                    <div style="display:grid; grid-template-columns: 1.2fr 1fr auto; gap:0.75rem; align-items: center;">
+                        <input type="text" id="input-candidate-name-${posKey}" class="form-control" placeholder="Candidate Full Name" style="font-size:0.85rem; padding:0.5rem; height:38px; text-align:left; color:#333; background:#fff; border-color:#ccc;">
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="input-candidate-file-${posKey}" class="file-upload-input" accept=".jpg, .jpeg, .png">
+                        </div>
+                        <button class="btn-glossy-pill" style="font-size:0.8rem; padding:0.6rem 1.5rem; border-radius:6px; background:#4a5568; color:white;" onclick="processCandidateInsertionWithFile('${posKey}')">+ Add</button>
+                    </div>
+                `;
+                configManagerNode.appendChild(row);
+            });
+
+            const maleGrid = document.getElementById('token-grid-male-node');
+            const femaleGrid = document.getElementById('token-grid-female-node');
+            maleGrid.innerHTML = ""; femaleGrid.innerHTML = "";
+
+            tokensKeys.forEach(t => {
+                const cardHtml = `<div class="token-badge ${dbPasswords[t].used ? 'burnt':'clean'}">${t}</div>`;
+                if(dbPasswords[t].gender === 'M') maleGrid.innerHTML += cardHtml;
+                else femaleGrid.innerHTML += cardHtml;
+            });
+
+            const tbody = document.querySelector('#table-audit-trail-ledger tbody');
+            tbody.innerHTML = "";
+            if(dbAuditTrail.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#999;">No logged events in current cycle.</td></tr>`;
+            } else {
+                dbAuditTrail.forEach(log => {
+                    tbody.innerHTML += `<tr><td style="font-family:monospace; font-weight:800;">${log.token}</td><td style="font-weight:700;">${log.gender === 'M'?'Male Unit':'Female Unit'}</td><td>${log.time}</td></tr>`;
+                });
+            }
+        }
+async function generateTokenBatchRegistry() {
+    const gender = document.getElementById('batch-gender-select').value;
+    const qty = parseInt(document.getElementById('batch-qty-input').value) || 5;
+    
+    // Check limit
+    const currentKeys = Object.keys(dbPasswords);
+    const count = currentKeys.filter(k => dbPasswords[k].gender === gender).length;
+    if (count + qty > MAX_LIMIT_PER_GENDER) {
+        alert("Security Halt: Batch overflow allocation boundaries.");
+        return;
+    }
+
+    // Generate and Save tokens
+    for (let i = 0; i < qty; i++) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let tokenStr = '';
+        for (let j = 0; j < 8; j++) {
+            tokenStr += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+
+        if (!dbPasswords[tokenStr]) {
+            dbPasswords[tokenStr] = { gender: gender, used: false };
+            
+            // Save to Firebase
+            try {
+                await db.collection("tokens").doc(tokenStr).set({
+                    gender: gender,
+                    used: false,
+                    createdAt: new Date()
+                });
+            } catch (e) {
+                console.error("Database save failed:", e);
+            }
+        } else {
+            i--; // Retry on duplicate
+        }
+    }
+    alert("New tokens generated and saved to database!");
+            updateLocalStorageEngine();
+            refreshAdminDashboardViews();
+        }
+
+        function clearLocalStorageWipe() {
+            if(confirm("DANGER: Wipe all local data?")) {
+                localStorage.clear();
+                dbCandidates = DEFAULT_RANDOM_CANDIDATES;
+                dbPasswords = { "PAX-9821": { gender: "M", used: false }, "PAX-4432": { gender: "F", used: false } };
+                dbAuditTrail = [];
+                dbSystemLogo = "";
+                updateLocalStorageEngine();
+                refreshSystemLogoDisplays();
+                refreshAdminDashboardViews();
+            }
+        }
+
+        async function initializeFirestoreSync() {
+            if (typeof db === 'undefined') {
+                console.warn("Firebase not initialized yet, retrying sync in 1s...");
+                setTimeout(initializeFirestoreSync, 1000);
+                return;
+            }
+
+            try {
+                // Sync portfolios from Firestore
+                const portfolioSnap = await db.collection("portfolios").get();
+                if (!portfolioSnap.empty) {
+                    portfolioSnap.forEach(doc => {
+                        const portData = doc.data();
+                        if (portData.name && !dbPositions[doc.id]) {
+                            dbPositions[doc.id] = { title: portData.name };
+                        }
+                    });
+                    console.log("Synced portfolios from Firestore:", dbPositions);
+                }
+
+                // Sync candidates from Firestore
+                const candidateSnap = await db.collection("candidates").get();
+                if (!candidateSnap.empty) {
+                    candidateSnap.forEach(doc => {
+                        const candData = doc.data();
+                        if (candData.name && !dbCandidates[doc.id]) {
+                            dbCandidates[doc.id] = {
+                                position: candData.portfolio || "president",
+                                name: candData.name,
+                                img: candData.image || "",
+                                votes: candData.votes || 0
+                            };
+                        }
+                    });
+                    console.log("Synced candidates from Firestore:", dbCandidates);
+                }
+
+                updateLocalStorageEngine();
+            } catch (err) {
+                console.error("Firestore sync error:", err);
+            }
+        }
+
+        refreshSystemLogoDisplays();
+        initializeFirestoreSync();
+    </script>
+</body>
+</html>

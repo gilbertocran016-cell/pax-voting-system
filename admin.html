@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAX ROMANA | MASTER HOUSE ADMIN CONSOLE</title>
+    <!-- Stable Tailwind CSS Engine matching image layouts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .admin-tab-active { border-bottom: 4px solid #7c2d12; color: #7c2d12; }
+
+        @media (max-width: 768px) {
+            .admin-tab-active { font-size: 0.85rem; }
+            #admin-login-gate { padding: 1rem; }
+            #admin-login-gate input { font-size: 1rem; padding: 1rem; }
+            #admin-login-gate button { padding: 1rem; font-size: 0.95rem; }
+            header { padding-left: 1rem; padding-right: 1rem; }
+            main { padding-left: 1rem; padding-right: 1rem; }
+        }
+
+        @media (max-width: 480px) {
+            .admin-tab-active { font-size: 0.8rem; }
+            #admin-login-gate { padding: 0.75rem; }
+            #admin-login-gate .rounded-3xl { border-radius: 1.5rem; }
+            #admin-login-gate input { font-size: 0.95rem; padding: 0.9rem; }
+            #admin-login-gate button { font-size: 0.9rem; padding: 0.9rem; }
+            body#admin-body-bg { padding: 1rem; }
+        }
+    </style>
+</head>
+<body id="admin-body-bg" class="bg-gradient-to-br from-amber-950 via-neutral-900 to-amber-900 min-h-screen font-sans flex items-center justify-center p-4">
+
+    <!-- ========================================== -->
+    <!--   1. SECURE BRANDED ADMIN PASSWORD GATE     -->
+    <!-- ========================================== -->
+    <div id="admin-login-gate" class="w-full max-w-2xl my-auto transition-all duration-300">
+        <div class="bg-[#701a1a] rounded-3xl p-8 md:p-12 shadow-2xl border-2 border-amber-600/30 text-center relative overflow-hidden">
+            
+            <!-- Branding Layout Header Matching Image 4f03ca53-0d81-4be0-b837-8a20355f0a9b -->
+            <div class="flex items-center justify-center gap-6 mb-4">
+                <!-- Left Seal Logo -->
+                <div class="w-16 h-16 md:w-20 md:h-20 bg-white rounded-full flex items-center justify-center shadow-md overflow-hidden p-0">
+                    <img src="logo1.png" alt="Pax Logo" class="w-full h-full object-cover fallback-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <span class="hidden font-bold text-amber-950 text-xs">⚜️</span>
+                </div>
+                
+                <div class="text-center">
+                    <h2 class="text-white text-lg md:text-2xl font-black tracking-wider uppercase">Pax Romana - KNUST</h2>
+                    <h3 class="text-amber-200 text-sm md:text-lg font-bold tracking-wide uppercase">Catholic Chaplaincy</h3>
+                </div>
+
+                <!-- Right Seal Logo / Flag -->
+                <div class="w-16 h-16 md:w-20 md:h-20 bg-white rounded-full flex items-center justify-center shadow-md overflow-hidden p-0">
+                    <img src="logo2.png" alt="Ghana Flag / Auxiliary Logo" class="w-full h-full object-cover fallback-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <span class="hidden font-bold text-amber-950 text-xs">GH</span>
+                </div>
+            </div>
+
+            <h1 class="text-white text-2xl md:text-4xl font-black tracking-wide uppercase mt-6 mb-4">Digital Voting Portal</h1>
+            
+            <!-- The Gold Separation Bar from image 4f03ca53-0d81-4be0-b837-8a20355f0a9b -->
+            <div class="h-1 w-full bg-gradient-to-r from-transparent via-amber-400 to-transparent my-6"></div>
+            
+            <p class="text-amber-100/80 text-xs font-bold tracking-widest uppercase mb-6">Central Administrative Console</p>
+
+            <!-- Password Field Area -->
+            <div class="max-w-md mx-auto space-y-4">
+                <input type="password" id="admin-secret-key" placeholder="ENTER MASTER PASSKEY" class="w-full p-4 border-2 border-amber-400 rounded-xl bg-[#4a1010] text-center text-white font-mono text-lg font-black tracking-widest placeholder-neutral-400/50 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all">
+                
+                <button onclick="verifyAdminAccessPass()" class="w-full bg-[#fdfbf7] text-[#701a1a] font-black tracking-widest text-sm p-4 rounded-xl shadow-xl hover:bg-amber-50 active:scale-[0.99] transition-all cursor-pointer uppercase">
+                    Verify Admin Passkey
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!--   2. MAIN MONITORING & SETTINGS DASHBOARD   -->
+    <!-- ========================================== -->
+    <div id="admin-dashboard-panel" class="hidden w-full min-h-screen bg-gray-100 absolute inset-0 overflow-y-auto">
+        <header class="bg-white border-b-2 border-neutral-200 shadow-sm sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-6 py-5 flex flex-col md:flex-row justify-between items-center gap-4">
+                <h1 class="text-2xl font-black tracking-wider text-amber-950 uppercase">Pax Romana Master Admin</h1>
+                <div class="flex flex-wrap justify-center space-x-6 text-sm font-extrabold tracking-wide text-neutral-600">
+                    <button onclick="switchAdminPanel('live-tally')" id="tab-live-tally" class="pb-2 admin-tab-active transition-all cursor-pointer hover:text-amber-900">LIVE TALLY MONITORING</button>
+                    <button onclick="switchAdminPanel('portfolios')" id="tab-portfolios" class="pb-2 transition-all cursor-pointer hover:text-amber-900">PORTFOLIO SETTINGS</button>
+                    <button onclick="switchAdminPanel('tokens')" id="tab-tokens" class="pb-2 transition-all cursor-pointer hover:text-amber-900">TOKEN MANAGEMENT CENTER</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto p-6 mt-4">
+            
+            <!-- SECTION 2A: LIVE TALLY MONITORING PANEL -->
+            <div id="panel-live-tally" class="admin-panel-view">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    <div class="bg-white p-6 rounded-xl shadow border-t-4 border-amber-900 text-center">
+                        <h3 class="text-xs font-black text-neutral-400 uppercase tracking-widest">Total Male Validated</h3>
+                        <p id="stat-male" class="text-4xl font-black text-neutral-800 mt-2">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow border-t-4 border-amber-700 text-center">
+                        <h3 class="text-xs font-black text-neutral-400 uppercase tracking-widest">Total Female Validated</h3>
+                        <p id="stat-female" class="text-4xl font-black text-neutral-800 mt-2">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow border-t-4 border-emerald-600 text-center">
+                        <h3 class="text-xs font-black text-neutral-400 uppercase tracking-widest">Ballots Submitted (Turnout)</h3>
+                        <p id="stat-ballots" class="text-4xl font-black text-emerald-600 mt-2">0</p>
+                    </div>
+                </div>
+
+                <div id="live-results-deck" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Charts populate here dynamically -->
+                </div>
+            </div>
+
+            <!-- SECTION 2B: PORTFOLIO CONFIGURATION -->
+            <div id="panel-portfolios" class="admin-panel-view hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="space-y-6">
+                        <div class="bg-white p-6 rounded-xl shadow border border-gray-200">
+                            <h3 class="font-black text-base border-b pb-2 mb-4 text-amber-950 uppercase tracking-wider">Add Portfolio</h3>
+                            <input type="text" id="new-portfolio-name" placeholder="e.g., President" class="w-full p-3 border rounded-lg bg-gray-50 font-medium focus:outline-none">
+                            <button onclick="createNewPortfolio()" class="w-full mt-4 bg-amber-900 text-white font-black p-3 rounded-lg text-xs tracking-wider hover:bg-amber-950 transition-all cursor-pointer uppercase">SAVE PORTFOLIO</button>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow border border-gray-200">
+                            <h3 class="font-black text-base border-b pb-2 mb-4 text-amber-950 uppercase tracking-wider">Register Candidate</h3>
+                            <label class="block text-xs font-black text-neutral-500 uppercase tracking-wider mb-1">Target Portfolio</label>
+                            <select id="cand-portfolio-select" class="w-full p-3 border rounded-lg bg-gray-50 mb-4 font-semibold focus:outline-none"></select>
+                            
+                            <label class="block text-xs font-black text-neutral-500 uppercase tracking-wider mb-1">Full Name</label>
+                            <input type="text" id="cand-name" class="w-full p-3 border rounded-lg bg-gray-50 mb-4 font-medium focus:outline-none">
+                            
+                            <label class="block text-xs font-black text-neutral-500 uppercase tracking-wider mb-1">Image URL</label>
+                            <input type="text" id="cand-image" placeholder="https://..." class="w-full p-3 border rounded-lg bg-gray-50 mb-5 font-medium focus:outline-none">
+                            
+                            <button onclick="registerNewCandidate()" class="w-full bg-amber-900 text-white font-black p-3 rounded-lg text-xs tracking-wider hover:bg-amber-950 transition-all cursor-pointer uppercase">REGISTER CANDIDATE</button>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow border border-gray-200">
+                        <h3 class="font-black text-base border-b pb-2 mb-4 text-amber-950 uppercase tracking-wider">Active Registrations Matrix</h3>
+                        <div id="matrix-display-container" class="space-y-6"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2C: TOKEN HUB & WIPE TOOL -->
+            <div id="panel-tokens" class="admin-panel-view hidden">
+                <div class="bg-white p-6 rounded-xl shadow border border-gray-200 max-w-xl mx-auto mb-8">
+                    <h3 class="font-black text-lg text-center text-amber-950 mb-4 uppercase tracking-wider">Generate Token Batches</h3>
+                    <div class="flex space-x-4">
+                        <div class="flex-1">
+                            <label class="block text-xs font-black text-neutral-500 uppercase tracking-wider mb-1">Framework Profile</label>
+                            <select id="token-batch-type" class="w-full p-3 border rounded-lg bg-gray-50 font-semibold focus:outline-none">
+                                <option value="Male Unit">Male Unit</option>
+                                <option value="Female Unit">Female Unit</option>
+                            </select>
+                        </div>
+                        <div class="w-32">
+                            <label class="block text-xs font-black text-neutral-500 uppercase tracking-wider mb-1">Batch Size</label>
+                            <input type="number" id="token-batch-count" value="10" class="w-full p-3 border rounded-lg bg-gray-50 text-center font-bold focus:outline-none">
+                        </div>
+                    </div>
+                    <button onclick="generateTokenBatch()" class="w-full mt-6 bg-amber-900 text-white font-black p-3.5 rounded-lg text-xs tracking-wider hover:bg-amber-950 transition-all cursor-pointer uppercase">BULK GENERATE TOKENS</button>
+                </div>
+
+                <div class="bg-red-50 border border-red-200 p-6 rounded-xl max-w-xl mx-auto text-center shadow-sm">
+                    <h4 class="text-red-800 font-black text-sm uppercase tracking-wider">System Wipe & Reset Hub</h4>
+                    <p class="text-xs text-red-600 mt-2 font-medium max-w-md mx-auto">This operation wipes all cloud tallies, deletes generated tokens, and flushes candidate profiles.</p>
+                    <button onclick="triggerSystemWipeDestruction()" class="mt-4 bg-red-600 text-white font-black text-xs uppercase px-6 py-3 rounded-lg hover:bg-red-700 transition-all shadow cursor-pointer tracking-wider">Wipe & Clear Cloud System</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- WIRE UP CLOUD SCRIPTS -->
+    <script type="module" src="firebase-config.js"></script>
+    <script type="module">
+        let portfolios = [];
+        let candidates = [];
+
+        const ADMIN_ACCESS_HASH = "5bcdc1a11fb2f21fc6be9f3feebe417b2ea98a9415ac056c5f668e0f55452acf";
+
+        async function secureHashValue(value) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(value);
+            const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(byte => byte.toString(16).padStart(2, "0")).join("");
+        }
+
+        // 1. FIXED MASTER PASSWORD CHECK FUNCTION WITH YOUR ACTUAL PASSKEY
+        window.verifyAdminAccessPass = async function() {
+            const secretKeyInput = document.getElementById('admin-secret-key').value.trim();
+            const inputHash = await secureHashValue(secretKeyInput);
+            
+            if(inputHash === ADMIN_ACCESS_HASH) {
+                document.getElementById('admin-login-gate').classList.add('hidden');
+                document.getElementById('admin-body-bg').className = "bg-gray-100 min-h-screen font-sans";
+                document.getElementById('admin-dashboard-panel').classList.remove('hidden');
+                
+                initializeAdminListeners();
+            } else {
+                alert("Unauthorized Entry. Access Denied.");
+            }
+        }
+
+        function initializeAdminListeners() {
+            if(!window.db) return setTimeout(initializeAdminListeners, 500);
+
+            window.fbOnSnapshot(window.fbDoc(window.db, "system", "metrics"), (docSnap) => {
+                if(docSnap.exists()){
+                    const data = docSnap.data();
+                    document.getElementById('stat-male').innerText = data.maleIssued || 0;
+                    document.getElementById('stat-female').innerText = data.femaleIssued || 0;
+                    document.getElementById('stat-ballots').innerText = data.ballotsSubmitted || 0;
+                }
+            });
+
+            window.fbOnSnapshot(window.fbCollection(window.db, "portfolios"), (snapshot) => {
+                portfolios = [];
+                snapshot.forEach(doc => portfolios.push({ id: doc.id, ...doc.data() }));
+                updatePortfolioDropdowns();
+                renderLiveTallyLayout();
+                renderManagementMatrix();
+            });
+
+            window.fbOnSnapshot(window.fbCollection(window.db, "candidates"), (snapshot) => {
+                candidates = [];
+                snapshot.forEach(doc => candidates.push({ id: doc.id, ...doc.data() }));
+                renderLiveTallyLayout();
+                renderManagementMatrix();
+            });
+        }
+
+        window.switchAdminPanel = function(panelId) {
+            document.querySelectorAll('.admin-panel-view').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`panel-${panelId}`).classList.remove('hidden');
+            
+            document.querySelectorAll('header button').forEach(b => b.classList.remove('admin-tab-active'));
+            document.getElementById(`tab-${panelId}`).classList.add('admin-tab-active');
+        }
+
+        window.createNewPortfolio = async function() {
+            const nameInput = document.getElementById('new-portfolio-name');
+            const name = nameInput.value.trim();
+            if(!name) return alert("Enter a valid portfolio title.");
+
+            const docId = name.toLowerCase().replace(/\s+/g, '-');
+            await window.fbSetDoc(window.fbDoc(window.db, "portfolios", docId), { name: name });
+            nameInput.value = "";
+        }
+
+        function updatePortfolioDropdowns() {
+            const select = document.getElementById('cand-portfolio-select');
+            if(!select) return;
+            select.innerHTML = portfolios.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+        }
+
+        window.registerNewCandidate = async function() {
+            const portfolio = document.getElementById('cand-portfolio-select').value;
+            const name = document.getElementById('cand-name').value.trim();
+            const image = document.getElementById('cand-image').value.trim();
+
+            if(!name) return alert("Candidate name is required.");
+
+            const newCandRef = window.fbDoc(window.fbCollection(window.db, "candidates"));
+            await window.fbSetDoc(newCandRef, {
+                name: name,
+                portfolio: portfolio,
+                image: image || "",
+                votes: 0
+            });
+
+            document.getElementById('cand-name').value = "";
+            document.getElementById('cand-image').value = "";
+        }
+
+        function renderLiveTallyLayout() {
+            const container = document.getElementById('live-results-deck');
+            if(!container) return;
+
+            container.innerHTML = portfolios.map(port => {
+                const portCandidates = candidates.filter(c => c.portfolio === port.name);
+                const totalPortVotes = portCandidates.reduce((sum, c) => sum + (c.votes || 0), 0);
+
+                const barsHtml = portCandidates.map(cand => {
+                    const pct = totalPortVotes > 0 ? Math.round((cand.votes / totalPortVotes) * 100) : 0;
+                    return `
+                        <div class="mb-4">
+                            <div class="flex justify-between text-xs font-bold text-neutral-700 mb-1">
+                                <span class="font-semibold">${cand.name}</span>
+                                <span class="font-mono">${cand.votes || 0} votes (${pct}%)</span>
+                            </div>
+                            <div class="w-full bg-gray-100 h-3 border rounded-full overflow-hidden">
+                                <div class="bg-amber-900 h-full rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="bg-white p-6 rounded-xl shadow border border-gray-100">
+                        <h4 class="font-black text-xs uppercase tracking-widest text-amber-950 border-b pb-2 mb-4">${port.name} Live Standing</h4>
+                        <div class="mt-4">${barsHtml || '<p class="text-xs text-neutral-400 italic font-medium">No candidates registered under this portfolio.</p>'}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderManagementMatrix() {
+            const container = document.getElementById('matrix-display-container');
+            if(!container) return;
+
+            container.innerHTML = portfolios.map(port => {
+                const portCandidates = candidates.filter(c => c.portfolio === port.name);
+                const listHtml = portCandidates.map(c => `
+                    <div class="flex justify-between items-center p-3 bg-neutral-50 border rounded-lg text-sm font-medium">
+                        <span class="text-neutral-700">${c.name}</span>
+                        <button onclick="removeCloudDocument('candidates', '${c.id}')" class="text-xs font-black uppercase tracking-wider text-red-600 hover:text-red-800 cursor-pointer">Delete</button>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="border rounded-xl p-4 bg-white">
+                        <div class="flex justify-between items-center mb-4 border-b pb-2">
+                            <h4 class="font-black text-xs uppercase tracking-widest text-neutral-800">${port.name} Track</h4>
+                            <button onclick="removeCloudDocument('portfolios', '${port.id}')" class="text-xs font-black uppercase tracking-wider text-red-600 hover:underline cursor-pointer">Delete Track</button>
+                        </div>
+                        <div class="space-y-2">${listHtml || '<p class="text-xs text-neutral-400 italic">No candidate entries added.</p>'}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.removeCloudDocument = async function(collectionName, id) {
+            if(confirm("Confirm removal?")) {
+                await window.fbDeleteDoc(window.fbDoc(window.db, collectionName, id));
+            }
+        }
+
+        window.generateTokenBatch = async function() {
+            const type = document.getElementById('token-batch-type').value;
+            const size = parseInt(document.getElementById('token-batch-count').value) || 10;
+
+            alert(`Generating ${size} unique cryptographic tokens for ${type}.`);
+            
+            for(let i=0; i<size; i++) {
+                const secureCode = Math.random().toString(36).substring(2, 6).toUpperCase() + "-" + Math.random().toString(36).substring(2, 6).toUpperCase();
+                await window.fbSetDoc(window.fbDoc(window.db, "tokens", secureCode), {
+                    type: type,
+                    used: false
+                });
+            }
+        }
+
+        window.triggerSystemWipeDestruction = async function() {
+            if(!confirm("⚠️ MAXIMUM SECURITY ALERT: Delete all data?")) return;
+            await window.fbSetDoc(window.fbDoc(window.db, "system", "metrics"), { ballotsSubmitted: 0, maleIssued: 0, femaleIssued: 0 });
+            const collections = ['candidates', 'portfolios', 'tokens'];
+            for(const colName of collections) {
+                const querySnap = await window.fbGetDocs(window.fbCollection(window.db, colName));
+                querySnap.forEach(async (docSnap) => {
+                    await window.fbDeleteDoc(window.fbDoc(window.db, colName, docSnap.id));
+                });
+            }
+            alert("🔥 System cleared back to a pristine destination slate!");
+        }
+    </script>
+</body>
+</html>
