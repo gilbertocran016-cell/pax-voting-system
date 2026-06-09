@@ -844,7 +844,7 @@ async function verifyToken() {
         let dbPositions = FIXED_8_POSITIONS; 
         let dbCandidates = safeJSONParse(localStorage.getItem('pax_candidates'), DEFAULT_RANDOM_CANDIDATES);
         dbCandidates = mergeDefaultCandidates(dbCandidates, DEFAULT_RANDOM_CANDIDATES);
-        dbPasswords = JSON.parse(localStorage.getItem('pax_passwords')) || STARTUP_PASSWORDS;
+        let dbPasswords = JSON.parse(localStorage.getItem('pax_passwords')) || STARTUP_PASSWORDS;
         let dbAuditTrail = JSON.parse(localStorage.getItem('pax_audit')) || [];
         let dbSystemLogo = localStorage.getItem('pax_system_logo') || ""; 
 
@@ -858,6 +858,48 @@ async function verifyToken() {
         if(!localStorage.getItem('pax_passwords')) {
             localStorage.setItem('pax_passwords', JSON.stringify(dbPasswords));
         }
+
+        // Initialize Firebase listeners to fetch live candidates from database
+        function initializeFirebaseListeners() {
+            try {
+                if (typeof db === 'undefined') {
+                    console.warn("⚠️ Firebase not fully initialized, retrying...");
+                    setTimeout(initializeFirebaseListeners, 1000);
+                    return;
+                }
+
+                // Listen for real-time candidate updates
+                db.collection("candidates").onSnapshot((snapshot) => {
+                    const fbCandidates = {};
+                    snapshot.forEach(doc => {
+                        fbCandidates[doc.id] = {
+                            position: doc.data().position,
+                            name: doc.data().name,
+                            img: doc.data().image || "",
+                            votes: doc.data().votes || 0
+                        };
+                    });
+
+                    // Update dbCandidates with Firebase data if available
+                    if (Object.keys(fbCandidates).length > 0) {
+                        dbCandidates = fbCandidates;
+                        console.log("✅ Candidates fetched from Firebase:", Object.keys(dbCandidates).length);
+                        
+                        // Refresh voting booth if already in progress
+                        if (document.getElementById('voting-tabs-navigation-node')?.children.length > 0) {
+                            buildDynamicBallotBoothStructure();
+                        }
+                    }
+                }, (error) => {
+                    console.warn("Firebase candidates listener error:", error);
+                });
+            } catch(err) {
+                console.warn("Firebase initialization skipped, using localStorage:", err);
+            }
+        }
+
+        // Start Firebase listeners after page loads
+        document.addEventListener('DOMContentLoaded', initializeFirebaseListeners);
 
         window.addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
