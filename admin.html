@@ -1,4 +1,4 @@
-ho<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -205,6 +205,36 @@ ho<!DOCTYPE html>
         let portfolios = [];
         let candidates = [];
         let tokens = [];
+        let systemMetrics = { maleIssued: 0, femaleIssued: 0, ballotsSubmitted: 0 };
+
+        // Default Portfolio Configuration
+        const DEFAULT_PORTFOLIOS = {
+            president: { name: "President" },
+            vice_president: { name: "Vice President" },
+            general_sec: { name: "General Secretary" },
+            finance_sec: { name: "Financial Secretary" },
+            organising_sec: { name: "Organizing Secretary" },
+            pro: { name: "Public Relations Officer (P.R.O.)" },
+            women_comm: { name: "Women's Commissioner" }
+        };
+
+        // Default Candidates with proper position mapping (matching index.html structure)
+        const DEFAULT_CANDIDATES = {
+            pres_1: { name: "Emmanuel Opoku Ware", position: "president", votes: 0, image: "" },
+            pres_2: { name: "Michael Kofi Asare", position: "president", votes: 0, image: "" },
+            vp_1: { name: "Francisca Yeboah", position: "vice_president", votes: 0, image: "" },
+            vp_2: { name: "Samuel Mensah Jnr", position: "vice_president", votes: 0, image: "" },
+            gen_1: { name: "Josephine Addo", position: "general_sec", votes: 0, image: "" },
+            gen_2: { name: "Kwame Boateng", position: "general_sec", votes: 0, image: "" },
+            fin_1: { name: "Esther Nkrumah", position: "finance_sec", votes: 0, image: "" },
+            fin_2: { name: "Daniel Adu", position: "finance_sec", votes: 0, image: "" },
+            org_1: { name: "Rejoice Mensah", position: "organising_sec", votes: 0, image: "" },
+            org_2: { name: "Patrick Opoku", position: "organising_sec", votes: 0, image: "" },
+            pro_1: { name: "Selina Owusu", position: "pro", votes: 0, image: "" },
+            pro_2: { name: "Benjamin Frimpong", position: "pro", votes: 0, image: "" },
+            wom_1: { name: "Abena Agyeman", position: "women_comm", votes: 0, image: "" },
+            wom_2: { name: "Martha Owusu", position: "women_comm", votes: 0, image: "" }
+        };
 
         const ADMIN_ACCESS_HASH = "5bcdc1a11fb2f21fc6be9f3feebe417b2ea98a9415ac056c5f668e0f55452acf";
 
@@ -235,32 +265,60 @@ ho<!DOCTYPE html>
         function initializeAdminListeners() {
             if(!window.db) return setTimeout(initializeAdminListeners, 500);
 
-            window.fbOnSnapshot(window.fbDoc(window.db, "system", "metrics"), (docSnap) => {
-                if(docSnap.exists()){
-                    const data = docSnap.data();
-                    document.getElementById('stat-male').innerText = data.maleIssued || 0;
-                    document.getElementById('stat-female').innerText = data.femaleIssued || 0;
-                    document.getElementById('stat-ballots').innerText = data.ballotsSubmitted || 0;
+            // Initialize default portfolios if empty
+            window.fbOnSnapshot(window.fbCollection(window.db, "portfolios"), async (snapshot) => {
+                if(snapshot.empty) {
+                    console.log("📋 Initializing default portfolios...");
+                    for(const [key, port] of Object.entries(DEFAULT_PORTFOLIOS)) {
+                        await window.fbSetDoc(window.fbDoc(window.db, "portfolios", key), { name: port.name });
+                    }
+                } else {
+                    portfolios = [];
+                    snapshot.forEach(doc => portfolios.push({ id: doc.id, ...doc.data() }));
+                    updatePortfolioDropdowns();
+                    renderLiveTallyLayout();
+                    renderManagementMatrix();
+                    renderAnalyticsPanel();
                 }
             });
 
-            window.fbOnSnapshot(window.fbCollection(window.db, "portfolios"), (snapshot) => {
-                portfolios = [];
-                snapshot.forEach(doc => portfolios.push({ id: doc.id, ...doc.data() }));
-                updatePortfolioDropdowns();
-                renderLiveTallyLayout();
-                renderManagementMatrix();
-                renderAnalyticsPanel();
+            // Initialize default candidates if empty
+            window.fbOnSnapshot(window.fbCollection(window.db, "candidates"), async (snapshot) => {
+                if(snapshot.empty) {
+                    console.log("👥 Initializing default candidates...");
+                    for(const [key, cand] of Object.entries(DEFAULT_CANDIDATES)) {
+                        await window.fbSetDoc(window.fbDoc(window.db, "candidates", key), {
+                            name: cand.name,
+                            portfolio: cand.portfolio,
+                            votes: 0,
+                            image: cand.image || ""
+                        });
+                    }
+                } else {
+                    candidates = [];
+                    snapshot.forEach(doc => candidates.push({ id: doc.id, ...doc.data() }));
+                    renderLiveTallyLayout();
+                    renderManagementMatrix();
+                    renderAnalyticsPanel();
+                }
             });
 
-            window.fbOnSnapshot(window.fbCollection(window.db, "candidates"), (snapshot) => {
-                candidates = [];
-                snapshot.forEach(doc => candidates.push({ id: doc.id, ...doc.data() }));
-                renderLiveTallyLayout();
-                renderManagementMatrix();
-                renderAnalyticsPanel();
+            // Monitor system metrics
+            window.fbOnSnapshot(window.fbDoc(window.db, "system", "metrics"), (docSnap) => {
+                if(docSnap.exists()){
+                    const data = docSnap.data();
+                    systemMetrics = {
+                        maleIssued: data.maleIssued || 0,
+                        femaleIssued: data.femaleIssued || 0,
+                        ballotsSubmitted: data.ballotsSubmitted || 0
+                    };
+                    document.getElementById('stat-male').innerText = systemMetrics.maleIssued;
+                    document.getElementById('stat-female').innerText = systemMetrics.femaleIssued;
+                    document.getElementById('stat-ballots').innerText = systemMetrics.ballotsSubmitted;
+                }
             });
 
+            // Monitor tokens
             window.fbOnSnapshot(window.fbCollection(window.db, "tokens"), (snapshot) => {
                 tokens = [];
                 snapshot.forEach(doc => tokens.push({ id: doc.id, ...doc.data() }));
@@ -294,22 +352,23 @@ ho<!DOCTYPE html>
         }
 
         window.registerNewCandidate = async function() {
-            const portfolio = document.getElementById('cand-portfolio-select').value;
+            const position = document.getElementById('cand-portfolio-select').value;
             const name = document.getElementById('cand-name').value.trim();
             const image = document.getElementById('cand-image').value.trim();
 
             if(!name) return alert("Candidate name is required.");
 
-            const newCandRef = window.fbDoc(window.fbCollection(window.db, "candidates"));
-            await window.fbSetDoc(newCandRef, {
+            const docId = name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
+            await window.fbSetDoc(window.fbDoc(window.db, "candidates", docId), {
                 name: name,
-                portfolio: portfolio,
+                position: position,
                 image: image || "",
                 votes: 0
             });
 
             document.getElementById('cand-name').value = "";
             document.getElementById('cand-image').value = "";
+            alert("✅ Candidate registered successfully!");
         }
 
         function renderLiveTallyLayout() {
@@ -324,7 +383,7 @@ ho<!DOCTYPE html>
             renderVoteSummaryCards(totalVotes, usedTokens, totalTokens, turnoutPercent);
 
             container.innerHTML = portfolios.map(port => {
-                const portCandidates = candidates.filter(c => c.portfolio === port.name);
+                const portCandidates = candidates.filter(c => c.position === port.name);
                 const totalPortVotes = portCandidates.reduce((sum, c) => sum + (c.votes || 0), 0);
 
                 const barsHtml = portCandidates.map(cand => {
@@ -341,7 +400,7 @@ ho<!DOCTYPE html>
                                         <p class="text-xs text-neutral-500">${cand.votes || 0} votes · ${pct}%</p>
                                     </div>
                                 </div>
-                                <span class="text-xs font-semibold text-neutral-600">${cand.portfolio}</span>
+                                <span class="text-xs font-semibold text-neutral-600">${cand.position}</span>
                             </div>
                             <div class="w-full bg-gray-200 h-3 rounded-full overflow-hidden">
                                 <div class="bg-amber-900 h-full rounded-full transition-all duration-500" style="width: ${pct}%"></div>
@@ -417,7 +476,7 @@ ho<!DOCTYPE html>
             `;
 
             portfolioBreakdown.innerHTML = portfolios.map(port => {
-                const portCandidates = candidates.filter(c => c.portfolio === port.name);
+                const portCandidates = candidates.filter(c => c.position === port.name);
                 const portVotes = portCandidates.reduce((sum, c) => sum + (c.votes || 0), 0);
                 const share = totalVotes > 0 ? Math.round((portVotes / totalVotes) * 100) : 0;
                 return `
@@ -457,7 +516,7 @@ ho<!DOCTYPE html>
             if(!container) return;
 
             container.innerHTML = portfolios.map(port => {
-                const portCandidates = candidates.filter(c => c.portfolio === port.name);
+                const portCandidates = candidates.filter(c => c.position === port.name);
                 const listHtml = portCandidates.map(c => `
                     <div class="flex justify-between items-center p-3 bg-neutral-50 border rounded-lg text-sm font-medium">
                         <span class="text-neutral-700">${c.name}</span>
@@ -487,28 +546,84 @@ ho<!DOCTYPE html>
             const type = document.getElementById('token-batch-type').value;
             const size = parseInt(document.getElementById('token-batch-count').value) || 10;
 
-            alert(`Generating ${size} unique cryptographic tokens for ${type}.`);
+            if (!confirm(`Generate ${size} tokens for ${type}?`)) return;
             
+            let successCount = 0;
             for(let i=0; i<size; i++) {
                 const secureCode = Math.random().toString(36).substring(2, 6).toUpperCase() + "-" + Math.random().toString(36).substring(2, 6).toUpperCase();
-                await window.fbSetDoc(window.fbDoc(window.db, "tokens", secureCode), {
-                    type: type,
-                    used: false
+                try {
+                    await window.fbSetDoc(window.fbDoc(window.db, "tokens", secureCode), {
+                        type: type,
+                        used: false,
+                        createdAt: new Date().toISOString()
+                    });
+                    successCount++;
+                    
+                    // Update system metrics
+                    if(type === "Male Unit") {
+                        systemMetrics.maleIssued = (systemMetrics.maleIssued || 0) + 1;
+                    } else {
+                        systemMetrics.femaleIssued = (systemMetrics.femaleIssued || 0) + 1;
+                    }
+                } catch(err) {
+                    console.error("Error creating token:", err);
+                }
+            }
+            
+            // Update system metrics in database
+            await window.fbSetDoc(window.fbDoc(window.db, "system", "metrics"), systemMetrics, { merge: true });
+            alert(`✅ Successfully generated ${successCount}/${size} tokens`);
+        }
+
+        // Record a vote - called when voter submits ballot
+        window.recordVote = async function(candidateId, portfolio) {
+            try {
+                const candidateRef = window.fbDoc(window.db, "candidates", candidateId);
+                const candidate = candidates.find(c => c.id === candidateId);
+                if(!candidate) return console.error("Candidate not found");
+                
+                // Increment vote count
+                await window.fbUpdateDoc(candidateRef, {
+                    votes: (candidate.votes || 0) + 1
                 });
+
+                // Increment ballot counter
+                systemMetrics.ballotsSubmitted = (systemMetrics.ballotsSubmitted || 0) + 1;
+                await window.fbSetDoc(window.fbDoc(window.db, "system", "metrics"), systemMetrics, { merge: true });
+                
+                console.log(`✅ Vote recorded for ${candidate.name}`);
+            } catch(err) {
+                console.error("Error recording vote:", err);
             }
         }
 
         window.triggerSystemWipeDestruction = async function() {
-            if(!confirm("⚠️ MAXIMUM SECURITY ALERT: Delete all data?")) return;
-            await window.fbSetDoc(window.fbDoc(window.db, "system", "metrics"), { ballotsSubmitted: 0, maleIssued: 0, femaleIssued: 0 });
-            const collections = ['candidates', 'portfolios', 'tokens'];
-            for(const colName of collections) {
-                const querySnap = await window.fbGetDocs(window.fbCollection(window.db, colName));
-                querySnap.forEach(async (docSnap) => {
-                    await window.fbDeleteDoc(window.fbDoc(window.db, colName, docSnap.id));
+            if(!confirm("⚠️ MAXIMUM SECURITY ALERT: Delete ALL system data? This cannot be undone!")) return;
+            if(!confirm("🔥 FINAL CONFIRMATION: This will delete all candidates, tokens, and votes. Continue?")) return;
+            
+            try {
+                // Reset metrics
+                await window.fbSetDoc(window.fbDoc(window.db, "system", "metrics"), { 
+                    ballotsSubmitted: 0, 
+                    maleIssued: 0, 
+                    femaleIssued: 0 
                 });
+                
+                // Delete all documents in collections
+                const collections = ['candidates', 'portfolios', 'tokens'];
+                for(const colName of collections) {
+                    const querySnap = await window.fbGetDocs(window.fbCollection(window.db, colName));
+                    querySnap.forEach(async (docSnap) => {
+                        await window.fbDeleteDoc(window.fbDoc(window.db, colName, docSnap.id));
+                    });
+                }
+                
+                alert("✅ System cleared! Reinitializing with defaults...");
+                setTimeout(() => location.reload(), 1500);
+            } catch(err) {
+                console.error("Error during wipe:", err);
+                alert("❌ Error during system wipe: " + err.message);
             }
-            alert("🔥 System cleared back to a pristine destination slate!");
         }
     </script>
 </body>
