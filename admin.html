@@ -86,6 +86,7 @@ ho<!DOCTYPE html>
                     <button onclick="switchAdminPanel('live-tally')" id="tab-live-tally" class="pb-2 admin-tab-active transition-all cursor-pointer hover:text-amber-900">LIVE TALLY MONITORING</button>
                     <button onclick="switchAdminPanel('portfolios')" id="tab-portfolios" class="pb-2 transition-all cursor-pointer hover:text-amber-900">PORTFOLIO SETTINGS</button>
                     <button onclick="switchAdminPanel('tokens')" id="tab-tokens" class="pb-2 transition-all cursor-pointer hover:text-amber-900">TOKEN MANAGEMENT CENTER</button>
+                    <button onclick="switchAdminPanel('statistics')" id="tab-statistics" class="pb-2 transition-all cursor-pointer hover:text-amber-900">STATISTICS & ANALYTICS</button>
                 </div>
             </div>
         </header>
@@ -175,6 +176,26 @@ ho<!DOCTYPE html>
                 </div>
             </div>
 
+            <!-- SECTION 2D: STATISTICS & ANALYTICS -->
+            <div id="panel-statistics" class="admin-panel-view hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <div id="analytics-card-turnout" class="bg-white p-6 rounded-xl shadow border border-gray-200"></div>
+                    <div id="analytics-card-votes" class="bg-white p-6 rounded-xl shadow border border-gray-200"></div>
+                    <div id="analytics-card-usage" class="bg-white p-6 rounded-xl shadow border border-gray-200"></div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow border border-gray-200">
+                        <h3 class="font-black text-base border-b pb-2 mb-4 text-amber-950 uppercase tracking-wider">Vote Share by Portfolio</h3>
+                        <div id="analytics-portfolio-breakdown" class="space-y-4"></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow border border-gray-200">
+                        <h3 class="font-black text-base border-b pb-2 mb-4 text-amber-950 uppercase tracking-wider">Candidate Performance</h3>
+                        <div id="analytics-candidate-breakdown" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -229,6 +250,7 @@ ho<!DOCTYPE html>
                 updatePortfolioDropdowns();
                 renderLiveTallyLayout();
                 renderManagementMatrix();
+                renderAnalyticsPanel();
             });
 
             window.fbOnSnapshot(window.fbCollection(window.db, "candidates"), (snapshot) => {
@@ -236,12 +258,14 @@ ho<!DOCTYPE html>
                 snapshot.forEach(doc => candidates.push({ id: doc.id, ...doc.data() }));
                 renderLiveTallyLayout();
                 renderManagementMatrix();
+                renderAnalyticsPanel();
             });
 
             window.fbOnSnapshot(window.fbCollection(window.db, "tokens"), (snapshot) => {
                 tokens = [];
                 snapshot.forEach(doc => tokens.push({ id: doc.id, ...doc.data() }));
                 renderLiveTallyLayout();
+                renderAnalyticsPanel();
             });
         }
 
@@ -356,6 +380,76 @@ ho<!DOCTYPE html>
                     <p class="text-xs text-neutral-500 mt-2">Based on tokens marked used</p>
                 </div>
             `;
+        }
+
+        function renderAnalyticsPanel() {
+            const turnoutCard = document.getElementById('analytics-card-turnout');
+            const votesCard = document.getElementById('analytics-card-votes');
+            const usageCard = document.getElementById('analytics-card-usage');
+            const portfolioBreakdown = document.getElementById('analytics-portfolio-breakdown');
+            const candidateBreakdown = document.getElementById('analytics-candidate-breakdown');
+
+            if(!turnoutCard || !votesCard || !usageCard || !portfolioBreakdown || !candidateBreakdown) return;
+
+            const totalVotes = candidates.reduce((sum, c) => sum + (c.votes || 0), 0);
+            const totalTokens = tokens.length;
+            const usedTokens = tokens.filter(t => t.used).length;
+            const unusedTokens = totalTokens - usedTokens;
+            const turnoutPercent = totalTokens ? Math.round((usedTokens / totalTokens) * 100) : 0;
+            const avgVotesPerCandidate = candidates.length ? Math.round((totalVotes / candidates.length) * 10) / 10 : 0;
+
+            turnoutCard.innerHTML = `
+                <h4 class="text-xs font-black uppercase tracking-widest text-neutral-400 mb-2">Voter Turnout</h4>
+                <p class="text-4xl font-black text-amber-950">${turnoutPercent}%</p>
+                <p class="text-xs text-neutral-500 mt-2">${usedTokens} of ${totalTokens} tokens were used</p>
+            `;
+
+            votesCard.innerHTML = `
+                <h4 class="text-xs font-black uppercase tracking-widest text-neutral-400 mb-2">Votes Cast</h4>
+                <p class="text-4xl font-black text-emerald-700">${totalVotes}</p>
+                <p class="text-xs text-neutral-500 mt-2">Average ${avgVotesPerCandidate} votes per candidate</p>
+            `;
+
+            usageCard.innerHTML = `
+                <h4 class="text-xs font-black uppercase tracking-widest text-neutral-400 mb-2">Token Usage</h4>
+                <p class="text-4xl font-black text-neutral-800">${unusedTokens}</p>
+                <p class="text-xs text-neutral-500 mt-2">${totalTokens ? turnoutPercent + '% turnout' : 'No token pool yet'}</p>
+            `;
+
+            portfolioBreakdown.innerHTML = portfolios.map(port => {
+                const portCandidates = candidates.filter(c => c.portfolio === port.name);
+                const portVotes = portCandidates.reduce((sum, c) => sum + (c.votes || 0), 0);
+                const share = totalVotes > 0 ? Math.round((portVotes / totalVotes) * 100) : 0;
+                return `
+                    <div class="p-4 rounded-xl border border-gray-100 bg-neutral-50">
+                        <div class="flex items-center justify-between text-sm font-semibold text-neutral-700 mb-2">
+                            <span>${port.name}</span>
+                            <span>${portVotes} votes</span>
+                        </div>
+                        <div class="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
+                            <div class="h-full rounded-full bg-amber-900" style="width:${share}%"></div>
+                        </div>
+                        <p class="text-xs text-neutral-500 mt-2">${share}% of total ballots cast</p>
+                    </div>
+                `;
+            }).join('') || '<p class="text-xs text-neutral-400 italic">No portfolio data yet.</p>';
+
+            candidateBreakdown.innerHTML = candidates
+                .slice()
+                .sort((a, b) => (b.votes || 0) - (a.votes || 0))
+                .map(cand => {
+                    const share = totalVotes > 0 ? Math.round(((cand.votes || 0) / totalVotes) * 100) : 0;
+                    return `
+                        <div class="p-3 rounded-xl border border-gray-100 bg-neutral-50">
+                            <div class="flex justify-between items-center text-sm font-semibold text-neutral-800 mb-1">
+                                <span>${cand.name}</span>
+                                <span>${cand.votes || 0} votes</span>
+                            </div>
+                            <p class="text-xs text-neutral-500">${cand.portfolio || 'Unassigned'} · ${share}% of total turnout</p>
+                        </div>
+                    `;
+                }).join('') || '<p class="text-xs text-neutral-400 italic">No candidates available for analysis yet.</p>';
+
         }
 
         function renderManagementMatrix() {
