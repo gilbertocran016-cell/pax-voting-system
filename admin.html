@@ -216,12 +216,13 @@
     </div>
 
     <!-- WIRE UP CLOUD SCRIPTS -->
-    <script type="module" src="firebase-config.js"></script>
-    <script type="module">
-        let portfolios = [];
-        let candidates = [];
-        let tokens = [];
-        let systemMetrics = { maleIssued: 0, femaleIssued: 0, ballotsSubmitted: 0 };
+    <script src="firebase-config.js"></script>
+    <script>
+        // Global variables accessible to console and functions
+        window.portfolios = [];
+        window.candidates = [];
+        window.tokens = [];
+        window.systemMetrics = { maleIssued: 0, femaleIssued: 0, ballotsSubmitted: 0 };
 
         // Default Portfolio Configuration
         const DEFAULT_PORTFOLIOS = {
@@ -289,8 +290,8 @@
                         await window.fbSetDoc(window.fbDoc(window.db, "portfolios", key), { name: port.name });
                     }
                 } else {
-                    portfolios = [];
-                    snapshot.forEach(doc => portfolios.push({ id: doc.id, ...doc.data() }));
+                    window.portfolios = [];
+                    snapshot.forEach(doc => window.portfolios.push({ id: doc.id, ...doc.data() }));
                     updatePortfolioDropdowns();
                     renderLiveTallyLayout();
                     renderManagementMatrix();
@@ -311,8 +312,8 @@
                         });
                     }
                 } else {
-                    candidates = [];
-                    snapshot.forEach(doc => candidates.push({ id: doc.id, ...doc.data() }));
+                    window.candidates = [];
+                    snapshot.forEach(doc => window.candidates.push({ id: doc.id, ...doc.data() }));
                     renderLiveTallyLayout();
                     renderManagementMatrix();
                     renderAnalyticsPanel();
@@ -323,21 +324,21 @@
             window.fbOnSnapshot(window.fbDoc(window.db, "system", "metrics"), (docSnap) => {
                 if(docSnap.exists()){
                     const data = docSnap.data();
-                    systemMetrics = {
+                    window.systemMetrics = {
                         maleIssued: data.maleIssued || 0,
                         femaleIssued: data.femaleIssued || 0,
                         ballotsSubmitted: data.ballotsSubmitted || 0
                     };
-                    document.getElementById('stat-male').innerText = systemMetrics.maleIssued;
-                    document.getElementById('stat-female').innerText = systemMetrics.femaleIssued;
-                    document.getElementById('stat-ballots').innerText = systemMetrics.ballotsSubmitted;
+                    document.getElementById('stat-male').innerText = window.systemMetrics.maleIssued;
+                    document.getElementById('stat-female').innerText = window.systemMetrics.femaleIssued;
+                    document.getElementById('stat-ballots').innerText = window.systemMetrics.ballotsSubmitted;
                 }
             });
 
             // Monitor tokens
             window.fbOnSnapshot(window.fbCollection(window.db, "tokens"), (snapshot) => {
-                tokens = [];
-                snapshot.forEach(doc => tokens.push({ id: doc.id, ...doc.data() }));
+                window.tokens = [];
+                snapshot.forEach(doc => window.tokens.push({ id: doc.id, ...doc.data() }));
                 renderLiveTallyLayout();
                 renderAnalyticsPanel();
             });
