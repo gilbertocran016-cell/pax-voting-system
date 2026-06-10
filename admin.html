@@ -365,7 +365,7 @@
         function updatePortfolioDropdowns() {
             const select = document.getElementById('cand-portfolio-select');
             if(!select) return;
-            select.innerHTML = portfolios.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+            select.innerHTML = window.portfolios.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
         }
 
         window.registerNewCandidate = async function() {
@@ -392,15 +392,15 @@
             const container = document.getElementById('live-results-deck');
             if(!container) return;
 
-            const totalVotes = candidates.reduce((sum, c) => sum + (c.votes || 0), 0);
-            const usedTokens = tokens.filter(t => t.used).length;
-            const totalTokens = tokens.length;
+            const totalVotes = window.candidates.reduce((sum, c) => sum + (c.votes || 0), 0);
+            const usedTokens = window.tokens.filter(t => t.used).length;
+            const totalTokens = window.tokens.length;
             const turnoutPercent = totalTokens ? Math.round((usedTokens / totalTokens) * 100) : 0;
 
             renderVoteSummaryCards(totalVotes, usedTokens, totalTokens, turnoutPercent);
 
-            container.innerHTML = portfolios.map(port => {
-                const portCandidates = candidates.filter(c => c.position === port.name);
+            container.innerHTML = window.portfolios.map(port => {
+                const portCandidates = window.candidates.filter(c => c.position === port.name);
                 const totalPortVotes = portCandidates.reduce((sum, c) => sum + (c.votes || 0), 0);
 
                 const barsHtml = portCandidates.map(cand => {
@@ -467,12 +467,12 @@
 
             if(!turnoutCard || !votesCard || !usageCard || !portfolioBreakdown || !candidateBreakdown) return;
 
-            const totalVotes = candidates.reduce((sum, c) => sum + (c.votes || 0), 0);
-            const totalTokens = tokens.length;
-            const usedTokens = tokens.filter(t => t.used).length;
+            const totalVotes = window.candidates.reduce((sum, c) => sum + (c.votes || 0), 0);
+            const totalTokens = window.tokens.length;
+            const usedTokens = window.tokens.filter(t => t.used).length;
             const unusedTokens = totalTokens - usedTokens;
             const turnoutPercent = totalTokens ? Math.round((usedTokens / totalTokens) * 100) : 0;
-            const avgVotesPerCandidate = candidates.length ? Math.round((totalVotes / candidates.length) * 10) / 10 : 0;
+            const avgVotesPerCandidate = window.candidates.length ? Math.round((totalVotes / window.candidates.length) * 10) / 10 : 0;
 
             turnoutCard.innerHTML = `
                 <h4 class="text-xs font-black uppercase tracking-widest text-neutral-400 mb-2">Voter Turnout</h4>
@@ -492,8 +492,8 @@
                 <p class="text-xs text-neutral-500 mt-2">${totalTokens ? turnoutPercent + '% turnout' : 'No token pool yet'}</p>
             `;
 
-            portfolioBreakdown.innerHTML = portfolios.map(port => {
-                const portCandidates = candidates.filter(c => c.position === port.name);
+            portfolioBreakdown.innerHTML = window.portfolios.map(port => {
+                const portCandidates = window.candidates.filter(c => c.position === port.name);
                 const portVotes = portCandidates.reduce((sum, c) => sum + (c.votes || 0), 0);
                 const share = totalVotes > 0 ? Math.round((portVotes / totalVotes) * 100) : 0;
                 return `
@@ -510,7 +510,7 @@
                 `;
             }).join('') || '<p class="text-xs text-neutral-400 italic">No portfolio data yet.</p>';
 
-            candidateBreakdown.innerHTML = candidates
+            candidateBreakdown.innerHTML = window.candidates
                 .slice()
                 .sort((a, b) => (b.votes || 0) - (a.votes || 0))
                 .map(cand => {
@@ -534,7 +534,7 @@
             const statsGrid = document.getElementById('candidate-stats-grid');
             if(!statsGrid) return;
 
-            const sortedCandidates = candidates.slice().sort((a, b) => (b.votes || 0) - (a.votes || 0));
+            const sortedCandidates = window.candidates.slice().sort((a, b) => (b.votes || 0) - (a.votes || 0));
             
             statsGrid.innerHTML = sortedCandidates.map(cand => {
                 const share = totalVotes > 0 ? Math.round(((cand.votes || 0) / totalVotes) * 100) : 0;
@@ -571,8 +571,8 @@
             const container = document.getElementById('matrix-display-container');
             if(!container) return;
 
-            container.innerHTML = portfolios.map(port => {
-                const portCandidates = candidates.filter(c => c.position === port.name);
+            container.innerHTML = window.portfolios.map(port => {
+                const portCandidates = window.candidates.filter(c => c.position === port.name);
                 const listHtml = portCandidates.map(c => `
                     <div class="flex justify-between items-center p-3 bg-neutral-50 border rounded-lg text-sm font-medium">
                         <span class="text-neutral-700">${c.name}</span>
@@ -635,7 +635,7 @@
         window.recordVote = async function(candidateId, portfolio) {
             try {
                 const candidateRef = window.fbDoc(window.db, "candidates", candidateId);
-                const candidate = candidates.find(c => c.id === candidateId);
+                const candidate = window.candidates.find(c => c.id === candidateId);
                 if(!candidate) return console.error("Candidate not found");
                 
                 // Increment vote count
