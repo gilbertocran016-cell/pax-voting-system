@@ -712,7 +712,6 @@
   appId: "1:216406695161:web:e234c8771abdbacc50d628",
   measurementId: "G-EKMTMH8X7Y"
 }; 
-let dbPasswords = {}; // Add this line! 
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
@@ -749,6 +748,142 @@ async function uploadExistingTokens() {
 
 
 
+</script>
+<script>
+        // ===== GLOBAL FUNCTIONS FOR HTML ONCLICK HANDLERS =====
+        // These must be declared BEFORE the main script block to be accessible to onclick handlers
+
+        function advanceToGenderSelection() {
+            regressToStep(2);
+        }
+
+        function regressToStep(stepNumber) {
+            document.querySelectorAll('.auth-wizard-step').forEach(step => step.classList.remove('active-step'));
+            document.getElementById(`auth-step-${stepNumber}`).classList.add('active-step');
+            
+            if(stepNumber === 1) {
+                currentSelectedGenderContext = "";
+                document.querySelectorAll('.gender-btn').forEach(btn => btn.classList.remove('selected-gender'));
+            }
+            if(stepNumber === 3) {
+                document.getElementById('input-voter-token').value = "";
+                document.getElementById('wrapper-login-error').innerText = "";
+                setTimeout(() => { document.getElementById('input-voter-token').focus(); }, 50);
+            }
+        }
+
+        function chooseGenderContext(gender) {
+            currentSelectedGenderContext = gender;
+            
+            document.querySelectorAll('.gender-btn').forEach(btn => btn.classList.remove('selected-gender'));
+            if(gender === 'M') {
+                document.getElementById('gender-male-node').classList.add('selected-gender');
+                document.getElementById('label-token-input-header').innerText = "Identify Male Voter Token Voucher";
+            } else {
+                document.getElementById('gender-female-node').classList.add('selected-gender');
+                document.getElementById('label-token-input-header').innerText = "Identify Female Voter Token Voucher";
+            }
+
+            setTimeout(() => { regressToStep(3); }, 250);
+        }
+
+        function executeRigidCrossAuthValidation() {
+            const tokenInput = document.getElementById('input-voter-token').value.trim().toUpperCase();
+            const errBox = document.getElementById('wrapper-login-error');
+            errBox.innerText = "";
+
+            console.log("--- STARTING TOKEN VALIDATION ---");
+            console.log("User Typed Token:", tokenInput);
+            console.log("Selected Login Context Gender:", currentSelectedGenderContext);
+
+            if (!tokenInput) {
+                errBox.innerText = "Error: Input box cannot be left empty.";
+                return;
+            }
+
+            const matchedTokenData = dbPasswords[tokenInput];
+            console.log("Database Match Found:", matchedTokenData);
+            
+            if (matchedTokenData === undefined || matchedTokenData === null) {
+                errBox.innerText = `Access Refused: Token code "${tokenInput}" not found in database register.`;
+                return;
+            }
+
+            let tokenGender = "";
+            let isUsed = false;
+
+            if (typeof matchedTokenData === 'string') {
+                tokenGender = matchedTokenData.trim().toUpperCase();
+            } else if (typeof matchedTokenData === 'object') {
+                if (matchedTokenData.gender) {
+                    tokenGender = String(matchedTokenData.gender).trim().toUpperCase();
+                }
+                if (matchedTokenData.used === true || matchedTokenData.used === 'true') {
+                    isUsed = true;
+                }
+            }
+
+            console.log("Resolved Token Gender:", tokenGender);
+            console.log("Resolved Used Status:", isUsed);
+
+            if (!tokenGender || (tokenGender !== 'M' && tokenGender !== 'F')) {
+                console.warn("System Warning: Token data layout mismatch or corrupted. Initiating auto-repair...");
+                tokenGender = currentSelectedGenderContext; 
+                dbPasswords[tokenInput] = { gender: tokenGender, used: false };
+                updateLocalStorageEngine();
+                console.log(`Auto-repair successful. Token ${tokenInput} updated to match context: ${tokenGender}`);
+            }
+
+            if (tokenGender !== currentSelectedGenderContext) {
+                const physicalTargetGroup = tokenGender === 'M' ? 'Male Voter' : 'Female Voter';
+                errBox.innerText = `Token Profile Error: This key belongs to a ${physicalTargetGroup} configuration. Please go back and update selection.`;
+                return;
+            }
+
+            if (isUsed) {
+                errBox.innerText = "Access Refused: Secure code token already marked spent.";
+                return;
+            }
+
+            currentVoterToken = tokenInput;
+            selectedBallotVotes = {};
+            
+            console.log("Validation Successful! Entering terminal session.");
+            document.getElementById('label-session-key').innerText = `SECURE VOTING TERMINAL SESSION`;
+            buildDynamicBallotBoothStructure();
+            displayViewMatrix('view-voting-booth');
+        }
+
+        function displayViewMatrix(viewId) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active-view'));
+            const target = document.getElementById(viewId);
+            if(target) target.classList.add('active-view');
+        }
+
+        function commitBallotTransactionRegistry() {
+            if (!currentVoterToken) return;
+            if (confirm("Confirm Selection: Write ballot payload array elements onto the ledger?")) {
+                Object.keys(selectedBallotVotes).forEach(pos => {
+                    const candidateSelected = selectedBallotVotes[pos];
+                    dbCandidates[candidateSelected].votes += 1;
+                });
+                dbPasswords[currentVoterToken].used = true;
+                dbAuditTrail.push({
+                    token: currentVoterToken.substring(0,5) + "****",
+                    gender: currentSelectedGenderContext,
+                    time: new Date().toLocaleTimeString()
+                });
+                updateLocalStorageEngine();
+                persistVoteResultsToFirestore();
+                displayViewMatrix('view-success');
+            }
+        }
+
+        function unconditionalSessionTerminus() {
+            currentVoterToken = "";
+            regressToStep(1);
+            displayViewMatrix('view-home');
+        }
 </script>
 <script>
         const FIXED_8_POSITIONS = {
@@ -951,46 +1086,9 @@ async function verifyToken() {
             }
         }
 
-        function displayViewMatrix(viewId) {
-            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active-view'));
-            const target = document.getElementById(viewId);
-            if(target) target.classList.add('active-view');
-        }
+        // displayViewMatrix - defined globally above
 
-        /* WIZARD SUB-NAVIGATION HANDLERS */
-        function advanceToGenderSelection() {
-            regressToStep(2);
-        }
-
-        function chooseGenderContext(gender) {
-            currentSelectedGenderContext = gender;
-            
-            document.querySelectorAll('.gender-btn').forEach(btn => btn.classList.remove('selected-gender'));
-            if(gender === 'M') {
-                document.getElementById('gender-male-node').classList.add('selected-gender');
-                document.getElementById('label-token-input-header').innerText = "Identify Male Voter Token Voucher";
-            } else {
-                document.getElementById('gender-female-node').classList.add('selected-gender');
-                document.getElementById('label-token-input-header').innerText = "Identify Female Voter Token Voucher";
-            }
-
-            setTimeout(() => { regressToStep(3); }, 250);
-        }
-
-        function regressToStep(stepNumber) {
-            document.querySelectorAll('.auth-wizard-step').forEach(step => step.classList.remove('active-step'));
-            document.getElementById(`auth-step-${stepNumber}`).classList.add('active-step');
-            
-            if(stepNumber === 1) {
-                currentSelectedGenderContext = "";
-                document.querySelectorAll('.gender-btn').forEach(btn => btn.classList.remove('selected-gender'));
-            }
-            if(stepNumber === 3) {
-                document.getElementById('input-voter-token').value = "";
-                document.getElementById('wrapper-login-error').innerText = "";
-                setTimeout(() => { document.getElementById('input-voter-token').focus(); }, 50);
-            }
-        }
+        /* WIZARD SUB-NAVIGATION HANDLERS - REMOVED (moved to global scope above) */
 
         async function fetchFirestoreTokenData(tokenInput) {
             if (typeof db === 'undefined') return null;
@@ -1002,103 +1100,6 @@ async function verifyToken() {
                 console.error("Firestore token lookup failed:", fireError);
                 return null;
             }
-        }
-
-        /* RIGID MATCH CROSS-CHECK VALIDATION ENGINE WITH AGNOSTIC FORMATTING & AUTO-REPAIR */
-        async function executeRigidCrossAuthValidation() {
-            const tokenInput = document.getElementById('input-voter-token').value.trim().toUpperCase();
-            const errBox = document.getElementById('wrapper-login-error');
-            errBox.innerText = "";
-
-            console.log("--- STARTING TOKEN VALIDATION ---");
-            console.log("User Typed Token:", tokenInput);
-            console.log("Selected Login Context Gender:", currentSelectedGenderContext);
-
-            if (!tokenInput) {
-                errBox.innerText = "Error: Input box cannot be left empty.";
-                return;
-            }
-
-            let matchedTokenData = dbPasswords[tokenInput];
-            console.log("Local Token Record Found:", matchedTokenData);
-
-            const firestoreTokenData = await fetchFirestoreTokenData(tokenInput);
-            if (firestoreTokenData) {
-                console.log("Firestore Token Record Found:", firestoreTokenData);
-                matchedTokenData = firestoreTokenData;
-                dbPasswords[tokenInput] = {
-                    gender: String(firestoreTokenData.gender || currentSelectedGenderContext).trim().toUpperCase(),
-                    used: firestoreTokenData.used === true || firestoreTokenData.used === 'true'
-                };
-                updateLocalStorageEngine();
-            }
-
-            if (matchedTokenData === undefined || matchedTokenData === null) {
-                errBox.innerText = `Access Refused: Token code "${tokenInput}" not found in database register.`;
-                return;
-            }
-
-            if (matchedTokenData === undefined || matchedTokenData === null) {
-                errBox.innerText = `Access Refused: Token code "${tokenInput}" not found in database register.`;
-                return;
-            }
-
-            // 2. AGNOSTIC GENDER RESOLUTION: Flatten any structural variation
-            let tokenGender = "";
-            let isUsed = false;
-
-            if (typeof matchedTokenData === 'string') {
-                // Handles case where entry is just a plain string: "F" or "M"
-                tokenGender = matchedTokenData.trim().toUpperCase();
-            } else if (typeof matchedTokenData === 'object') {
-                // Handles case where entry is a configuration object
-                if (matchedTokenData.gender) {
-                    tokenGender = String(matchedTokenData.gender).trim().toUpperCase();
-                }
-                if (matchedTokenData.used === true || matchedTokenData.used === 'true') {
-                    isUsed = true;
-                }
-            }
-
-            console.log("Resolved Token Gender:", tokenGender);
-            console.log("Resolved Used Status:", isUsed);
-
-            // 3. AUTO-REPAIR MECHANISM: Fix missing or corrupted gender attributes on the fly
-            if (!tokenGender || (tokenGender !== 'M' && tokenGender !== 'F')) {
-                console.warn("System Warning: Token data layout mismatch or corrupted. Initiating auto-repair...");
-                
-                // Dynamically infer gender based on active context to seamlessly let the voter pass
-                tokenGender = currentSelectedGenderContext; 
-                
-                // Re-write the database object with the repaired schema
-                dbPasswords[tokenInput] = { gender: tokenGender, used: false };
-                
-                // Commit the fixed structure back to localStorage immediately
-                updateLocalStorageEngine();
-                console.log(`Auto-repair successful. Token ${tokenInput} updated to match context: ${tokenGender}`);
-            }
-
-            // 4. STAGE BLOCKER: Trigger error ONLY if they genuinely DON'T match
-            if (tokenGender !== currentSelectedGenderContext) {
-                const physicalTargetGroup = tokenGender === 'M' ? 'Male Voter' : 'Female Voter';
-                errBox.innerText = `Token Profile Error: This key belongs to a ${physicalTargetGroup} configuration. Please go back and update selection.`;
-                return;
-            }
-
-            // 5. Check usage limits
-            if (isUsed) {
-                errBox.innerText = "Access Refused: This token has already been used. Please request a new voting token from the administrator.";
-                return;
-            }
-
-            // Setup session payload variables safely
-            currentVoterToken = tokenInput;
-            selectedBallotVotes = {};
-            
-            console.log("Validation Successful! Entering terminal session.");
-            document.getElementById('label-session-key').innerText = `SECURE VOTING TERMINAL SESSION`;
-            buildDynamicBallotBoothStructure();
-            displayViewMatrix('view-voting-booth');
         }
 
         function executeAdminAuthentication() {
@@ -1294,33 +1295,9 @@ async function verifyToken() {
             }
         }
 
-        async function commitBallotTransactionRegistry() {
-            if (!currentVoterToken) return;
-            if (confirm("Confirm Selection: Write ballot payload array elements onto the ledger?")) {
-                Object.keys(selectedBallotVotes).forEach(pos => {
-                    const candidateSelected = selectedBallotVotes[pos];
-                    dbCandidates[candidateSelected].votes += 1;
-                });
-                dbPasswords[currentVoterToken].used = true;
-                dbAuditTrail.push({
-                    token: currentVoterToken.substring(0,5) + "****",
-                    gender: currentSelectedGenderContext,
-                    time: new Date().toLocaleTimeString()
-                });
-                updateLocalStorageEngine();
-                await persistVoteResultsToFirestore();
-                if (typeof refreshAdminDashboardViews === 'function') {
-                    refreshAdminDashboardViews();
-                }
-                displayViewMatrix('view-success');
-            }
-        }
-
-        function unconditionalSessionTerminus() {
-            currentVoterToken = "";
-            regressToStep(1);
-            displayViewMatrix('view-home');
-        }
+        // persistVoteResultsToFirestore - uses async from earlier definition
+        // commitBallotTransactionRegistry - uses sync version defined globally above
+        // unconditionalSessionTerminus - defined globally above
 
         function switchDashboardTab(tab) {
             document.querySelectorAll('.db-tab-btn').forEach(b => b.classList.remove('active-tab'));
