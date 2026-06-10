@@ -382,18 +382,41 @@
             const imageFile = document.getElementById('cand-image').files[0];
 
             if(!name) return alert("Candidate name is required.");
-            if(!imageFile) return alert("Please select a candidate photo.");
 
-            // Convert image to base64
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                const base64Image = e.target.result;
-                const docId = name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
-                
+            const docId = name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
+            
+            // If image is selected, convert to base64; otherwise use empty string
+            if(imageFile) {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    const base64Image = e.target.result;
+                    
+                    await window.fbSetDoc(window.fbDoc(window.db, "candidates", docId), {
+                        name: name,
+                        position: position,
+                        image: base64Image,
+                        votes: 0
+                    });
+
+                    document.getElementById('cand-name').value = "";
+                    document.getElementById('cand-image').value = "";
+                    document.getElementById('image-preview-container').innerHTML = "";
+                    
+                    // Update URL with total candidate count
+                    const totalCandidates = window.candidates.length + 1;
+                    const urlParams = new URLSearchParams(window.location.search);
+                    urlParams.set('candidateCount', totalCandidates);
+                    window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
+                    
+                    alert("✅ Candidate registered successfully! URL updated with candidate count.");
+                };
+                reader.readAsDataURL(imageFile);
+            } else {
+                // Save without image
                 await window.fbSetDoc(window.fbDoc(window.db, "candidates", docId), {
                     name: name,
                     position: position,
-                    image: base64Image,
+                    image: "",
                     votes: 0
                 });
 
@@ -407,9 +430,8 @@
                 urlParams.set('candidateCount', totalCandidates);
                 window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
                 
-                alert("✅ Candidate registered successfully! URL updated with candidate count.");
-            };
-            reader.readAsDataURL(imageFile);
+                alert("✅ Candidate registered successfully (no photo)! URL updated with candidate count.");
+            }
         }
 
         // Preview image when file is selected
