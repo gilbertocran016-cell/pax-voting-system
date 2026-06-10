@@ -398,17 +398,23 @@
                         votes: 0
                     });
 
+                    // Add to local array and re-render immediately
+                    window.candidates.push({ id: docId, name: name, position: position, image: base64Image, votes: 0 });
+                    renderManagementMatrix();
+                    renderLiveTallyLayout();
+                    renderAnalyticsPanel();
+
                     document.getElementById('cand-name').value = "";
                     document.getElementById('cand-image').value = "";
                     document.getElementById('image-preview-container').innerHTML = "";
                     
                     // Update URL with total candidate count
-                    const totalCandidates = window.candidates.length + 1;
+                    const totalCandidates = window.candidates.length;
                     const urlParams = new URLSearchParams(window.location.search);
                     urlParams.set('candidateCount', totalCandidates);
                     window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
                     
-                    alert("✅ Candidate registered successfully! URL updated with candidate count.");
+                    alert("✅ Candidate registered successfully!");
                 };
                 reader.readAsDataURL(imageFile);
             } else {
@@ -420,17 +426,23 @@
                     votes: 0
                 });
 
+                // Add to local array and re-render immediately
+                window.candidates.push({ id: docId, name: name, position: position, image: "", votes: 0 });
+                renderManagementMatrix();
+                renderLiveTallyLayout();
+                renderAnalyticsPanel();
+
                 document.getElementById('cand-name').value = "";
                 document.getElementById('cand-image').value = "";
                 document.getElementById('image-preview-container').innerHTML = "";
                 
                 // Update URL with total candidate count
-                const totalCandidates = window.candidates.length + 1;
+                const totalCandidates = window.candidates.length;
                 const urlParams = new URLSearchParams(window.location.search);
                 urlParams.set('candidateCount', totalCandidates);
                 window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
                 
-                alert("✅ Candidate registered successfully (no photo)! URL updated with candidate count.");
+                alert("✅ Candidate registered successfully (no photo)!");
             }
         }
 
