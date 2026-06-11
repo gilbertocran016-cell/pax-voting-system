@@ -373,7 +373,15 @@
         function updatePortfolioDropdowns() {
             const select = document.getElementById('cand-portfolio-select');
             if(!select) return;
-            select.innerHTML = window.portfolios.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            
+            select.innerHTML = window.portfolios.map(p => 
+                `<option value="${p.id}">${p.name}</option>`
+            ).join('');
+            
+            // ✅ Ensure a portfolio is always selected
+            if(window.portfolios.length > 0 && !select.value) {
+                select.value = window.portfolios[0].id;
+            }
         }
 
         window.registerNewCandidate = async function() {
@@ -382,8 +390,14 @@
             const imageFile = document.getElementById('cand-image').files[0];
 
             if(!name) return alert("Candidate name is required.");
+            if(!position) return alert("Please select a portfolio first.");
 
-            const docId = name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
+            // ✅ FIX: Generate unique ID using name + portfolio + random string
+            // This prevents ID collisions from rapid submissions
+            const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const docId = `${position}-${name.toLowerCase().replace(/\s+/g, '-')}-${randomSuffix}`;
+            
+            console.log(`📝 Registering candidate: ${name} (ID: ${docId})`);
             
             // If image is selected, convert to base64; otherwise use empty string
             if(imageFile) {
@@ -391,10 +405,36 @@
                 reader.onload = async function(e) {
                     const base64Image = e.target.result;
                     
+                    try {
+                        await window.fbSetDoc(window.fbDoc(window.db, "candidates", docId), {
+                            name: name,
+                            position: position,
+                            image: base64Image,
+                            votes: 0
+                        });
+
+                        document.getElementById('cand-name').value = "";
+                        document.getElementById('cand-image').value = "";
+                        document.getElementById('image-preview-container').innerHTML = "";
+                        
+                        alert("✅ Candidate registered successfully!");
+                        console.log(`✅ Candidate ${name} saved to database`);
+                        
+                        // Force UI refresh after save completes
+                        setTimeout(() => renderManagementMatrix(), 300);
+                    } catch(err) {
+                        console.error("Error saving candidate:", err);
+                        alert("❌ Error: " + err.message);
+                    }
+                };
+                reader.readAsDataURL(imageFile);
+            } else {
+                // Save without image
+                try {
                     await window.fbSetDoc(window.fbDoc(window.db, "candidates", docId), {
                         name: name,
                         position: position,
-                        image: base64Image,
+                        image: "",
                         votes: 0
                     });
 
@@ -402,23 +442,15 @@
                     document.getElementById('cand-image').value = "";
                     document.getElementById('image-preview-container').innerHTML = "";
                     
-                    alert("✅ Candidate registered successfully!");
-                };
-                reader.readAsDataURL(imageFile);
-            } else {
-                // Save without image
-                await window.fbSetDoc(window.fbDoc(window.db, "candidates", docId), {
-                    name: name,
-                    position: position,
-                    image: "",
-                    votes: 0
-                });
-
-                document.getElementById('cand-name').value = "";
-                document.getElementById('cand-image').value = "";
-                document.getElementById('image-preview-container').innerHTML = "";
-                
-                alert("✅ Candidate registered successfully (no photo)!");
+                    alert("✅ Candidate registered successfully (no photo)!");
+                    console.log(`✅ Candidate ${name} saved to database`);
+                    
+                    // Force UI refresh after save completes
+                    setTimeout(() => renderManagementMatrix(), 300);
+                } catch(err) {
+                    console.error("Error saving candidate:", err);
+                    alert("❌ Error: " + err.message);
+                }
             }
         }
 
@@ -622,8 +654,15 @@
             const container = document.getElementById('matrix-display-container');
             if(!container) return;
 
+            // ✅ Debug log to ensure candidates are loaded
+            console.log("🔄 Rendering matrix with candidates:", window.candidates.length, "total");
+
             container.innerHTML = window.portfolios.map(port => {
+                // Filter candidates by exact position match
                 const portCandidates = window.candidates.filter(c => c.position === port.id);
+                
+                console.log(`📊 ${port.name}: ${portCandidates.length} candidates`);
+                
                 const listHtml = portCandidates.map(c => `
                     <div class="flex justify-between items-center p-3 bg-neutral-50 border rounded-lg text-sm font-medium">
                         <span class="text-neutral-700">${c.name}</span>
@@ -634,10 +673,14 @@
                 return `
                     <div class="border rounded-xl p-4 bg-white">
                         <div class="flex justify-between items-center mb-4 border-b pb-2">
-                            <h4 class="font-black text-xs uppercase tracking-widest text-neutral-800">${port.name} Track</h4>
+                            <h4 class="font-black text-xs uppercase tracking-widest text-neutral-800">
+                                ${port.name} Track (${portCandidates.length} candidates)
+                            </h4>
                             <button onclick="removeCloudDocument('portfolios', '${port.id}')" class="text-xs font-black uppercase tracking-wider text-red-600 hover:underline cursor-pointer">Delete Track</button>
                         </div>
-                        <div class="space-y-2">${listHtml || '<p class="text-xs text-neutral-400 italic">No candidate entries added.</p>'}</div>
+                        <div class="space-y-2">
+                            ${listHtml || '<p class="text-xs text-neutral-400 italic">No candidate entries added.</p>'}
+                        </div>
                     </div>
                 `;
             }).join('');
